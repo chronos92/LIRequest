@@ -24,12 +24,13 @@ public class LIRequestBase {
     private var requestWithLogin : Bool = false
     private var previousCallbackName : String?
     private var previousContentType : LIRequestContentType?
+    private var subContentType : LIRequestContentType?
     private var callbackForNextCall : Bool = false
     private var contentTypeForNexCall : Bool = false
     private var manager : AFHTTPSessionManager = AFHTTPSessionManager()
     private var readingOption : NSJSONReadingOptions? = nil
     //MARK: INIT & SET
-    public init(contentType ct : LIRequestContentType = .TextPlain, callbackName cn : String = "data") {
+    public init(contentType ct : LIRequestContentType, callbackName cn : String = "data") {
         contentType = ct
         callbackName = cn
     }
@@ -40,7 +41,8 @@ public class LIRequestBase {
         callbackName = callback
     }
     
-    public func setContentTypeForNextCall(contentType : LIRequestContentType, readingOption : NSJSONReadingOptions? = nil) {
+    public func setContentTypeForNextCall(contentType : LIRequestContentType, subContentType sub : LIRequestContentType? = nil, readingOption : NSJSONReadingOptions? = nil) {
+        self.subContentType = sub
         self.readingOption = readingOption
         contentTypeForNexCall = true
         previousContentType = self.contentType
@@ -67,7 +69,12 @@ public class LIRequestBase {
             }
         case.TextHtml : responseSerializer = AFHTTPResponseSerializer()
         }
-        responseSerializer.acceptableContentTypes = Set<String>(arrayLiteral:  contentType.rawValue,LIRequestContentType.TextPlain.rawValue)
+        responseSerializer.acceptableContentTypes = Set<String>(arrayLiteral:  contentType.rawValue)
+        if subContentType != nil {
+            responseSerializer.acceptableContentTypes?.insert(subContentType!.rawValue)
+        } else {
+            responseSerializer.acceptableContentTypes?.insert(LIRequestContentType.TextPlain.rawValue)
+        }
         manager.responseSerializer = responseSerializer
         manager.requestSerializer = requestSerializer
         
@@ -117,7 +124,7 @@ public class LIRequestBase {
         case .ApplicationJson, .TextPlain,.ImageJpeg: responseSerializer = AFJSONResponseSerializer()
         case .TextHtml : responseSerializer = AFHTTPResponseSerializer()
         }
-        responseSerializer.acceptableContentTypes = Set<String>(arrayLiteral: contentType.rawValue,LIRequestContentType.TextPlain.rawValue)
+        responseSerializer.acceptableContentTypes = Set<String>(arrayLiteral: contentType.rawValue,LIRequestContentType.TextHtml.rawValue)
         manager.responseSerializer = responseSerializer
         manager.requestSerializer = requestSerializer
         
