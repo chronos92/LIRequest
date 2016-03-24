@@ -121,10 +121,19 @@ public class LIRequestBase {
         }
         var responseSerializer : AFHTTPResponseSerializer
         switch contentType {
-        case .ApplicationJson, .TextPlain,.ImageJpeg: responseSerializer = AFJSONResponseSerializer()
+        case .ApplicationJson, .TextPlain,.ImageJpeg:
+            responseSerializer = AFJSONResponseSerializer()
+            if readingOption != nil {
+                (responseSerializer as! AFJSONResponseSerializer).readingOptions = readingOption!
+            }
         case .TextHtml : responseSerializer = AFHTTPResponseSerializer()
         }
-        responseSerializer.acceptableContentTypes = Set<String>(arrayLiteral: contentType.rawValue,LIRequestContentType.TextHtml.rawValue)
+        responseSerializer.acceptableContentTypes = Set<String>(arrayLiteral: contentType.rawValue)
+        if subContentType != nil {
+            responseSerializer.acceptableContentTypes?.insert(subContentType!.rawValue)
+        } else {
+            responseSerializer.acceptableContentTypes?.insert(LIRequestContentType.TextPlain.rawValue)
+        }
         manager.responseSerializer = responseSerializer
         manager.requestSerializer = requestSerializer
         
