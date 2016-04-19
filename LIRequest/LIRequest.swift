@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import AFNetworking
+//import AFNetworking
 
 public enum LIRequestContentType : String {
     case TextPlain = "text/plain"
@@ -109,9 +109,11 @@ public class LIRequestBase : Equatable {
                 self.contentTypeForNexCall = false
                 self.contentType = self.previousContentType!
             }
+            self.callbackIsComplete(true)
             }) { (dataTask, error) -> Void in
                 NSLog("Risposta failure per : %@", url)
                 self.callbackFailure(error.localizedDescription)
+                self.callbackIsComplete(false)
         }
     }
     //MARK: POST
@@ -175,9 +177,11 @@ public class LIRequestBase : Equatable {
                 self.contentTypeForNexCall = false
                 self.contentType = self.previousContentType!
             }
+            self.callbackIsComplete(true)
             }) { (dataTask, error) -> Void in
                 NSLog("Risposta failure per : %@", url)
                 self.callbackFailure(error.localizedDescription)
+                self.callbackIsComplete(false)
         }
     }
     
@@ -212,6 +216,7 @@ public class LIRequestBase : Equatable {
             }, progress: { (progress) -> Void in
                     block?(percentage: progress.fractionCompleted)
             }, success: { (dataTask, responseObject) -> Void in
+                
                 let obj = responseObject as! [String:AnyObject]
                 if !(obj["success"] as? Bool ?? true) {
                     self.callbackFailure(obj["message"] as! String)
@@ -230,8 +235,10 @@ public class LIRequestBase : Equatable {
                         self.callbackSuccess(response[currentCallback])
                     }
                 }
+                self.callbackIsComplete(true)
             }) { (dataTask, error) -> Void in
                 self.callbackFailure(error.localizedDescription)
+                self.callbackIsComplete(false)
         }
         
     }
@@ -244,16 +251,23 @@ public class LIRequestBase : Equatable {
         
     }
     
+    func callbackIsComplete(state : Bool) {
+        
+    }
+    
     public func abortAllOperation() {
         manager.operationQueue.cancelAllOperations()
     }
-    
 }
 
 public class LIRequest : LIRequestBase {
     private var success : (response:AnyObject?)->Void = {_ in }
     private var failure : (errorMessage : String)->Void = {_ in }
+    private var isComplete : ((request : LIRequest, state : Bool)->Void)?
     
+    public func setIsComplete(isCompleteHandler : (request:LIRequest, state : Bool)->Void) {
+        isComplete = isCompleteHandler
+    }
     
     public func setSuccess(successHandler : (responseObject:AnyObject?)->Void) {
         success = successHandler
@@ -261,6 +275,10 @@ public class LIRequest : LIRequestBase {
     
     public func setFailure(failureHandler : (errorMessage : String)->Void) {
         failure = failureHandler
+    }
+    
+    override func callbackIsComplete(state : Bool) {
+            self.isComplete?(request: self,state: state)
     }
     
     override func callbackFailure(errorMessage : String) {
