@@ -16,7 +16,12 @@ public enum LIRequestContentType : String {
     case ImageJpeg = "image/jpeg"
 }
 
-public class LIRequestBase {
+public func == (l1 : LIRequestBase, l2 : LIRequestBase) -> Bool {
+    return l1.LIUID == l2.LIUID
+}
+
+public class LIRequestBase : Equatable {
+    let LIUID : String = NSUUID().UUIDString
     private var contentType : LIRequestContentType
     private(set) var callbackName : String
     private var loginUsername : String?
