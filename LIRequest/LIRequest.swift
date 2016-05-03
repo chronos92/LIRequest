@@ -7,7 +7,7 @@
 //
 
 import Foundation
-//import AFNetworking
+import AFNetworking
 
 public enum LIRequestContentType : String {
     case TextPlain = "text/plain"
