@@ -216,29 +216,36 @@ public class LIRequestBase : Equatable {
             }, progress: { (progress) -> Void in
                     block?(percentage: progress.fractionCompleted)
             }, success: { (dataTask, responseObject) -> Void in
-                
-                let obj = responseObject as! [String:AnyObject]
-                if !(obj["success"] as? Bool ?? true) {
-                    self.callbackFailure(obj["message"] as! String)
-                } else {
-                    let currentCallback = self.callbackName
-                    if self.callbackForNextCall {
-                        self.callbackForNextCall = false
-                        self.callbackName = self.previousCallbackName!
-                        self.previousCallbackName = nil
-                    }
-                    
-                    let response = responseObject as! [String:AnyObject]
-                    if currentCallback == "" {
-                        self.callbackSuccess(response)
+                if responseObject is NSData {
+                    if [LIRequestContentType.TextHtml,LIRequestContentType.TextPlain].contains(self.contentType) {
+                        self.callbackSuccess(responseObject)
                     } else {
-                        self.callbackSuccess(response[currentCallback])
+                        self.callbackFailure("found data instead object")
+                    }
+                } else {
+                    let obj = responseObject as! [String:AnyObject]
+                    if !(obj["success"] as? Bool ?? true) {
+                        self.callbackFailure(obj["message"] as! String)
+                    } else {
+                        let currentCallback = self.callbackName
+                        if self.callbackForNextCall {
+                            self.callbackForNextCall = false
+                            self.callbackName = self.previousCallbackName!
+                            self.previousCallbackName = nil
+                        }
+                        
+                        let response = responseObject as! [String:AnyObject]
+                        if currentCallback == "" {
+                            self.callbackSuccess(response)
+                        } else {
+                            self.callbackSuccess(response[currentCallback])
+                        }
                     }
                 }
                 self.callbackIsComplete(true)
-            }) { (dataTask, error) -> Void in
-                self.callbackFailure(error.localizedDescription)
-                self.callbackIsComplete(false)
+        }) { (dataTask, error) -> Void in
+            self.callbackFailure(error.localizedDescription)
+            self.callbackIsComplete(false)
         }
         
     }
