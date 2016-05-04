@@ -292,8 +292,8 @@ public class LIRequest : LIRequestBase {
         failure = failureHandler
     }
     
-    public func setFailure(failureHandler : (object : AnyObject?)->Void) {
-        failureObject = failureHandler
+    public func setFailure(failureHandlerWithObject : (object : AnyObject?)->Void) {
+        failureObject = failureHandlerWithObject
     }
     
     override func callbackIsComplete(state : Bool) {
