@@ -150,7 +150,11 @@ public class LIRequestBase : Equatable {
             if self.contentType == .ApplicationJson || self.contentType == .TextPlain {
                 if let obj = responseObject as? [String:AnyObject] {
                     if !(obj["success"] as? Bool ?? true) {
-                        self.callbackFailure(obj["message"] as! String)
+                        if obj["data"] != nil {
+                            self.callbackFailure(obj["data"])
+                        } else {
+                            self.callbackFailure(obj["message"] as! String)
+                        }
                     } else {
                         NSLog("Risposta success per : %@", url)
                         let currentCallback = self.callbackName
@@ -250,6 +254,9 @@ public class LIRequestBase : Equatable {
         
     }
     //MARK: CALLBACK
+    func callbackFailure(object : AnyObject?) {
+        
+    }
     func callbackFailure(errorMessage : String) {
         
     }
@@ -268,6 +275,7 @@ public class LIRequestBase : Equatable {
 }
 
 public class LIRequest : LIRequestBase {
+    private var failureObject : (object : AnyObject?)->Void = {_ in }
     private var success : (response:AnyObject?)->Void = {_ in }
     private var failure : (errorMessage : String)->Void = {_ in }
     private var isComplete : ((request : LIRequest, state : Bool)->Void)?
@@ -284,6 +292,10 @@ public class LIRequest : LIRequestBase {
         failure = failureHandler
     }
     
+    public func setFailure(failureHandler : (object : AnyObject?)->Void) {
+        failureObject = failureHandler
+    }
+    
     override func callbackIsComplete(state : Bool) {
             self.isComplete?(request: self,state: state)
     }
@@ -291,6 +303,10 @@ public class LIRequest : LIRequestBase {
     override func callbackFailure(errorMessage : String) {
         NSLog("Error call : %@", errorMessage)
         failure(errorMessage: errorMessage)
+    }
+    
+    override func callbackFailure(object: AnyObject?) {
+        failureObject(object: object)
     }
     
     override func callbackSuccess(response: AnyObject?) {
