@@ -85,22 +85,35 @@ public class LIRequestBase : Equatable {
         
         NSLog("Nuova chiamata GET : %@", url)
         manager.GET(url, parameters: params, progress: nil, success: { (dataTask, responseObject) -> Void in
+            
             NSLog("Risposta success per : %@", url)
             if self.contentType == .ApplicationJson || self.contentType == .TextPlain {
-                let currentCallback = self.callbackName
-                if self.callbackForNextCall {
-                    self.callbackForNextCall = false
-                    self.callbackName = self.previousCallbackName!
-                    self.previousCallbackName = nil
-                }
-                if let responseDict = responseObject as? [String:AnyObject] {
-                    if currentCallback == "" {
-                        self.callbackSuccess(responseDict)
+                if let obj = responseObject as? [String:AnyObject] {
+                    if !(obj["success"] as? Bool ?? true) {
+                        if obj["data"] != nil {
+                            self.callbackFailure(obj["data"])
+                        } else {
+                            self.callbackFailure(obj["message"] as! String)
+                        }
                     } else {
-                        self.callbackSuccess(responseDict[currentCallback])
+                        let currentCallback = self.callbackName
+                        if self.callbackForNextCall {
+                            self.callbackForNextCall = false
+                            self.callbackName = self.previousCallbackName!
+                            self.previousCallbackName = nil
+                        }
+                        if let responseDict = responseObject as? [String:AnyObject] {
+                            if currentCallback == "" {
+                                self.callbackSuccess(responseDict)
+                            } else {
+                                self.callbackSuccess(responseDict[currentCallback])
+                            }
+                        } else {
+                            self.callbackSuccess(responseObject)
+                        }
                     }
                 } else {
-                    self.callbackSuccess(responseObject)
+                    self.callbackSuccess(nil)
                 }
             } else {
                 self.callbackSuccess(responseObject)
