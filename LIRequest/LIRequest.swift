@@ -206,11 +206,11 @@ public class LIRequestBase : Equatable {
         post(url, andImage: image, withFileName: name, andParams: params, andParamsName: nil, uploadProgressBlock: nil)
     }
     
-    public func post(url : String, andImage image : UIImage, withFileName name : String, andParams params : [String:AnyObject]?, uploadProgressBlock block : (percentage:Double)->Void) {
+    public func post(url : String, andImage image : UIImage, withFileName name : String, andParams params : [String:AnyObject]?, uploadProgressBlock block : (percentage:NSProgress)->Void) {
         post(url, andImage: image, withFileName: name, andParams: params, andParamsName: nil, uploadProgressBlock: block)
     }
     
-    public func post(url : String, andImage image : UIImage, withFileName fileName : String, andParams params : [String:AnyObject]?, andParamsName paramsName : String?, uploadProgressBlock block : ((percentage:Double)-> Void)?) {
+    public func post(url : String, andImage image : UIImage, withFileName fileName : String, andParams params : [String:AnyObject]?, andParamsName paramsName : String?, uploadProgressBlock block : ((percentage:NSProgress)-> Void)?) {
         let imageData = UIImageJPEGRepresentation(image, 0.5)
         let requestSerializer = AFHTTPRequestSerializer()
         requestSerializer.setValue(LIRequestContentType.ImageJpeg.rawValue, forHTTPHeaderField: "Content-Type")
@@ -231,7 +231,7 @@ public class LIRequestBase : Equatable {
         manager.POST(url, parameters: params, constructingBodyWithBlock: { (formData) -> Void in
             formData.appendPartWithFileData(imageData!, name: paramsName ?? "", fileName: fileName, mimeType: LIRequestContentType.ImageJpeg.rawValue)
             }, progress: { (progress) -> Void in
-                    block?(percentage: progress.fractionCompleted)
+                    block?(percentage: progress)
             }, success: { (dataTask, responseObject) -> Void in
                 if responseObject is NSData {
                     if [LIRequestContentType.TextHtml,LIRequestContentType.TextPlain].contains(self.contentType) {
