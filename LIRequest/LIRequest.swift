@@ -32,12 +32,13 @@ public class LIRequestBase : Equatable {
     private var subContentType : LIRequestContentType?
     private var callbackForNextCall : Bool = false
     private var contentTypeForNexCall : Bool = false
-    private var manager : AFHTTPSessionManager = AFHTTPSessionManager()
+    private var manager : AFHTTPSessionManager
     private var readingOption : NSJSONReadingOptions? = nil
     //MARK: INIT & SET
-    public init(contentType ct : LIRequestContentType, callbackName cn : String = "data") {
+    public init(contentType ct : LIRequestContentType, callbackName cn : String = "data", manager m : AFHTTPSessionManager? = nil) {
         contentType = ct
         callbackName = cn
+        manager = m ?? AFHTTPSessionManager()
     }
     
     public func setCallbackNameForNextCall(callback : String) {
