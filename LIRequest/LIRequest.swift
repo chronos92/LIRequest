@@ -164,7 +164,7 @@ public class LIRequestBase : Equatable {
             if self.contentType == .ApplicationJson || self.contentType == .TextPlain {
                 if let obj = responseObject as? [String:AnyObject] {
                     if !(obj["success"] as? Bool ?? true) {
-                        if obj["data"] != nil {
+                        if obj["data"] != nil && !(obj["data"]! as? [JSONObject] ?? []).isEmpty {
                             self.callbackFailure(obj["data"])
                         } else {
                             self.callbackFailure(obj["message"] as! String)
@@ -291,7 +291,7 @@ public class LIRequestBase : Equatable {
 }
 
 public class LIRequest : LIRequestBase {
-    private var failureObject : (object : AnyObject?)->Void = {_ in }
+    private var failureObject : ((object : AnyObject?)->Void)? = nil
     private var success : (response:AnyObject?)->Void = {_ in }
     private var failure : (errorMessage : String)->Void = {_ in }
     private var isComplete : ((request : LIRequest, state : Bool)->Void)?
@@ -323,7 +323,11 @@ public class LIRequest : LIRequestBase {
     }
     
     override func callbackFailure(object: AnyObject?) {
-        failureObject(object: object)
+        if failureObject != nil {
+            failureObject!(object: object)
+        } else {
+            failure(errorMessage: "")
+        }
     }
     
     override func callbackSuccess(response: AnyObject?) {
