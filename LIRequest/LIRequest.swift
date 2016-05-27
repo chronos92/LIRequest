@@ -232,7 +232,9 @@ public class LIRequestBase : Equatable {
         manager.POST(url, parameters: params, constructingBodyWithBlock: { (formData) -> Void in
             formData.appendPartWithFileData(imageData!, name: paramsName ?? "", fileName: fileName, mimeType: LIRequestContentType.ImageJpeg.rawValue)
             }, progress: { (progress) -> Void in
+                dispatch_async(dispatch_get_main_queue(), { 
                     block?(percentage: progress)
+                })
             }, success: { (dataTask, responseObject) -> Void in
                 if responseObject is NSData {
                     if [LIRequestContentType.TextHtml,LIRequestContentType.TextPlain].contains(self.contentType) {
