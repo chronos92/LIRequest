@@ -164,7 +164,7 @@ public class LIRequestBase : Equatable {
             if self.contentType == .ApplicationJson || self.contentType == .TextPlain {
                 if let obj = responseObject as? [String:AnyObject] {
                     if !(obj["success"] as? Bool ?? true) {
-                        if obj["data"] != nil && !(obj["data"]! as? [JSONObject] ?? []).isEmpty {
+                        if obj["data"] != nil && !(obj["data"]! as? [[String:AnyObject]] ?? []).isEmpty {
                             self.callbackFailure(obj["data"])
                         } else {
                             self.callbackFailure(obj["message"] as! String)
