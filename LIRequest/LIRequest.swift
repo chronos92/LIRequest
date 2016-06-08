@@ -114,7 +114,7 @@ public class LIRequestBase : Equatable {
                         }
                     }
                 } else {
-                    self.callbackSuccess(nil)
+                    self.callbackSuccess(responseObject)
                 }
             } else {
                 self.callbackSuccess(responseObject)
@@ -186,7 +186,7 @@ public class LIRequestBase : Equatable {
                         }
                     }
                 } else {
-                    self.callbackSuccess(nil)
+                    self.callbackSuccess(responseObject)
                 }
             } else {
                 self.callbackSuccess(responseObject)
