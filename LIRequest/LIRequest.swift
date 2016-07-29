@@ -124,18 +124,18 @@ public class LIRequestBase : Equatable {
                 self.contentType = self.previousContentType!
             }
             self.callbackIsComplete(true)
-            }) { (dataTask, error) -> Void in
-                NSLog("Risposta failure per : %@", url)
-                self.callbackFailure(error.localizedDescription)
-                self.callbackIsComplete(false)
+        }) { (dataTask, error) -> Void in
+            NSLog("Risposta failure per : %@", url)
+            self.callbackFailure(error.localizedDescription)
+            self.callbackIsComplete(false)
         }
     }
     //MARK: POST
     public func post(url : String, andParams params : [String:AnyObject]? = nil) -> NSURLSessionDataTask? {
         let requestSerializer = AFHTTPRequestSerializer()
         if params != nil {
-        let data = try! NSJSONSerialization.dataWithJSONObject(params!, options: NSJSONWritingOptions.PrettyPrinted)
-         NSLog("%@",String(data: data, encoding: NSUTF8StringEncoding)!)
+            let data = try! NSJSONSerialization.dataWithJSONObject(params!, options: NSJSONWritingOptions.PrettyPrinted)
+            NSLog("%@",String(data: data, encoding: NSUTF8StringEncoding)!)
         }
         if requestWithLogin {
             requestSerializer.setAuthorizationHeaderFieldWithUsername(self.loginUsername!, password: self.loginPassword!)
@@ -196,10 +196,10 @@ public class LIRequestBase : Equatable {
                 self.contentType = self.previousContentType!
             }
             self.callbackIsComplete(true)
-            }) { (dataTask, error) -> Void in
-                NSLog("Risposta failure per : %@", url)
-                self.callbackFailure(error.localizedDescription)
-                self.callbackIsComplete(false)
+        }) { (dataTask, error) -> Void in
+            NSLog("Risposta failure per : %@", url)
+            self.callbackFailure(error.localizedDescription)
+            self.callbackIsComplete(false)
         }
     }
     
@@ -213,6 +213,10 @@ public class LIRequestBase : Equatable {
     
     public func post(url : String, andImage image : UIImage, withFileName fileName : String, andParams params : [String:AnyObject]?, andParamsName paramsName : String?, uploadProgressBlock block : ((percentage:NSProgress)-> Void)?) -> NSURLSessionDataTask? {
         let imageData = UIImageJPEGRepresentation(image, 0.5)
+        return post(url, andData: imageData!,withFileName: fileName,andParams: params,andParamsName: paramsName,uploadProgressBlock: block)
+    }
+    
+    public func post(url : String, andData data : NSData, withFileName fileName : String, andParams params : [String:AnyObject]?, andParamsName paramsName : String?, uploadProgressBlock block : ((progress : NSProgress)->Void)?) -> NSURLSessionDataTask? {
         let requestSerializer = AFHTTPRequestSerializer()
         requestSerializer.setValue(LIRequestContentType.ImageJpeg.rawValue, forHTTPHeaderField: "Content-Type")
         if requestWithLogin {
@@ -230,10 +234,10 @@ public class LIRequestBase : Equatable {
         NSLog("Nuova chiamata POST : %@", url)
         
         return manager.POST(url, parameters: params, constructingBodyWithBlock: { (formData) -> Void in
-            formData.appendPartWithFileData(imageData!, name: paramsName ?? "", fileName: fileName, mimeType: LIRequestContentType.ImageJpeg.rawValue)
+            formData.appendPartWithFileData(data, name: paramsName ?? "", fileName: fileName, mimeType: LIRequestContentType.ImageJpeg.rawValue)
             }, progress: { (progress) -> Void in
-                dispatch_async(dispatch_get_main_queue(), { 
-                    block?(percentage: progress)
+                dispatch_async(dispatch_get_main_queue(), {
+                    block?(progress: progress)
                 })
             }, success: { (dataTask, responseObject) -> Void in
                 if responseObject is NSData {
@@ -313,7 +317,7 @@ public class LIRequest : LIRequestBase {
     }
     
     override func callbackIsComplete(state : Bool) {
-            self.isComplete?(request: self,state: state)
+        self.isComplete?(request: self,state: state)
     }
     
     override func callbackFailure(errorMessage : String) {

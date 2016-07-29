@@ -297,6 +297,7 @@
 				A17BE45E1C99A1FB002A1673 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
