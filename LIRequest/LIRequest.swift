@@ -164,6 +164,7 @@ public class LIRequestBase : Equatable {
             if self.contentType == .ApplicationJson || self.contentType == .TextPlain {
                 if let obj = responseObject as? [String:AnyObject] {
                     if !(obj["success"] as? Bool ?? true) {
+                        debugPrint(obj)
                         if obj["data"] != nil && !(obj["data"]! as? [[String:AnyObject]] ?? []).isEmpty {
                             self.callbackFailure(obj["data"])
                         } else {
@@ -198,6 +199,7 @@ public class LIRequestBase : Equatable {
             self.callbackIsComplete(true)
         }) { (dataTask, error) -> Void in
             NSLog("Risposta failure per : %@", url)
+            debugPrint(error)
             self.callbackFailure(error.localizedDescription)
             self.callbackIsComplete(false)
         }
