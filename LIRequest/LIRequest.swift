@@ -165,7 +165,7 @@ public class LIRequestBase : Equatable {
                 if let obj = responseObject as? [String:AnyObject] {
                     if !(obj["success"] as? Bool ?? true) {
                         debugPrint(obj)
-                        if obj["data"] != nil && !(obj["data"]! as? [[String:AnyObject]] ?? []).isEmpty {
+                        if obj["data"] != nil && !(obj["data"]! as? [String:AnyObject] ?? [:]).isEmpty {
                             self.callbackFailure(obj["data"])
                         } else {
                             self.callbackFailure(obj["message"] as! String)
