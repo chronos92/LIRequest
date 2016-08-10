@@ -166,7 +166,7 @@ public class LIRequestBase : Equatable {
                     if !(obj["success"] as? Bool ?? true) {
                         debugPrint(obj)
                         if obj["data"] != nil && !(obj["data"]! as? [String:AnyObject] ?? [:]).isEmpty {
-                            self.callbackFailure(obj["data"])
+                            self.callbackFailure(obj["data"],withErrorMessage:obj["message"] as! String)
                         } else {
                             self.callbackFailure(obj["message"] as! String)
                         }
@@ -275,7 +275,7 @@ public class LIRequestBase : Equatable {
         }
     }
     //MARK: CALLBACK
-    func callbackFailure(object : AnyObject?) {
+    func callbackFailure(object : AnyObject?,withErrorMessage errorText : String) {
         
     }
     func callbackFailure(errorMessage : String) {
@@ -296,10 +296,10 @@ public class LIRequestBase : Equatable {
 }
 
 public class LIRequest : LIRequestBase {
-    private var failureObject : ((object : AnyObject?)->Void)? = nil
-    private var success : (response:AnyObject?)->Void = {_ in }
-    private var failure : (errorMessage : String)->Void = {_ in }
-    private var isComplete : ((request : LIRequest, state : Bool)->Void)?
+    internal var failureObject : ((object : AnyObject?,errorMessage : String)->Void)? = nil
+    internal var success : (response:AnyObject?)->Void = {_ in }
+    internal var failure : (errorMessage : String)->Void = {_ in }
+    internal var isComplete : ((request : LIRequest, state : Bool)->Void)?
     
     public func setIsComplete(isCompleteHandler : (request:LIRequest, state : Bool)->Void) {
         isComplete = isCompleteHandler
@@ -312,10 +312,11 @@ public class LIRequest : LIRequestBase {
     public func setFailure(failureHandler : (errorMessage : String)->Void) {
         failure = failureHandler
     }
+    @available(*,renamed="setFailureWithObject(failureHandler:(object:errorMessage:))")
+    public func setFailureWithObject(failureHandler : (object : AnyObject?)->Void) {}
     
-    public func setFailureWithObject(failureHandler : (object : AnyObject?)->Void) {
+    public func setFailureWithObject(failureHandler : (object : AnyObject?,errorMessage : String)->Void) {
         failureObject = failureHandler
-        
     }
     
     override func callbackIsComplete(state : Bool) {
@@ -327,11 +328,11 @@ public class LIRequest : LIRequestBase {
         failure(errorMessage: errorMessage)
     }
     
-    override func callbackFailure(object: AnyObject?) {
+    override func callbackFailure(object: AnyObject?,withErrorMessage errorText : String) {
         if failureObject != nil {
-            failureObject!(object: object)
+            failureObject!(object: object,errorMessage : errorText)
         } else {
-            failure(errorMessage: "")
+            failure(errorMessage: errorText)
         }
     }
     
