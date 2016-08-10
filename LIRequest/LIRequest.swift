@@ -92,7 +92,7 @@ public class LIRequestBase : Equatable {
                 if let obj = responseObject as? [String:AnyObject] {
                     if !(obj["success"] as? Bool ?? true) {
                         if obj["data"] != nil {
-                            self.callbackFailure(obj["data"])
+                            self.callbackFailure(obj["data"], withErrorMessage: obj["message"] as! String)
                         } else {
                             self.callbackFailure(obj["message"] as! String)
                         }
