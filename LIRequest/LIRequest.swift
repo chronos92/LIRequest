@@ -312,7 +312,7 @@ public class LIRequest : LIRequestBase {
     public func setFailure(failureHandler : (errorMessage : String)->Void) {
         failure = failureHandler
     }
-    @available(*,renamed="setFailureWithObject(failureHandler:(object:errorMessage:))")
+    @available(*,unavailable,renamed="setFailureWithObject(failureHandler:(object:errorMessage:))")
     public func setFailureWithObject(failureHandler : (object : AnyObject?)->Void) {}
     
     public func setFailureWithObject(failureHandler : (object : AnyObject?,errorMessage : String)->Void) {
