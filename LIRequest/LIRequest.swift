@@ -13,6 +13,14 @@ public func == (l1 : LIRequestBase, l2 : LIRequestBase) -> Bool {
     return l1.LIUID == l2.LIUID
 }
 
+@available(*,deprecated:1.6,renamed:"LIRequest.ContentType")
+public enum LIRequestContentType : String {
+    case TextPlain = "text/plain"
+    case ApplicationJson = "application/json"
+    case TextHtml = "text/html"
+    case ImageJpeg = "image/jpeg"
+}
+
 public class LIRequestBase : Equatable {
     
     public enum ContentType : String {
@@ -57,7 +65,7 @@ public class LIRequestBase : Equatable {
         self.contentType = contentType
     }
     
-    public func setLogin(username : String, andLoginPassword password : String) {
+    public func setLogin(username : String, andPassword password : String) {
         requestWithLogin = true
         loginUsername = username
         loginPassword = password
@@ -288,10 +296,12 @@ public class LIRequestBase : Equatable {
             self.callbackIsComplete(with: false)
         }
     }
+    
     //MARK: CALLBACK
     func callbackFailure(with object : AnyObject?,andErrorMessage errorText : String) {
         
     }
+    
     func callbackFailure(with errorMessage : String) {
         
     }
@@ -307,6 +317,37 @@ public class LIRequestBase : Equatable {
     public func abortAllOperation() {
         manager.operationQueue.cancelAllOperations()
     }
+    
+    
+    @available(*,deprecated: 1.6,message: "use callbackIsComplete(with:) isntead")
+    func callbackIsComplete(_ state : Bool) {
+        callbackIsComplete(with: state)
+    }
+    @available(*,deprecated: 1.6,message: "use callbackSuccess(with:) instead")
+    func callbackSuccess(_ response : AnyObject?) {
+        self.callbackSuccess(with: response)
+    }
+    @available(*,deprecated:1.6,message:"use callbackFailure(with:) instead")
+    func callbackFailure(_ errorMessage : String) {
+        self.callbackFailure(with: errorMessage)
+    }
+    @available(*,deprecated:1.6,message:"use callbackFailure(with:andErrormessage:) instead")
+    func callbackFailure(_ object : AnyObject?,withErrorMessage errorText : String) {
+        self.callbackFailure(with: object, andErrorMessage: errorText)
+    }
+    @available(*,deprecated:1.6,message:"use setLogin(username:andPassword:) insted")
+    public func setLoginUsername(_ username : String, andLoginPassword password : String) {
+        self.setLogin(username: username, andPassword: password)
+    }
+    @available(*,deprecated:1.6,message:"use setForNextCall(contentType:subContentType:readingOption:) instead")
+    public func setContentTypeForNextCall(_ contentType : LIRequest.ContentType, subContentType sub : LIRequest.ContentType? = nil, readingOption : JSONSerialization.ReadingOptions? = nil) {
+        self.setForNextCall(contentType: contentType, subContentType: sub, readingOption: readingOption)
+    }
+    @available(*,deprecated:1.6,message: "use setForNextCall(callback:) instead")
+    public func setCallbackNameForNextCall(_ callback : String) {
+        self.setForNextCall(callback: callback)
+    }
+
 }
 
 public class LIRequest : LIRequestBase {
@@ -328,7 +369,8 @@ public class LIRequest : LIRequestBase {
     }
     
     @available(*,unavailable)
-    public func setFailureWithObject(_ failureHandler : (object : AnyObject?)->Void) {}
+    public func setFailureWithObject(_ failureHandler : (object : AnyObject?)->Void) {
+    }
     
     public func setFailure(withObject failureHandler : (object : AnyObject?,errorMessage : String)->Void) {
         failureObject = failureHandler
@@ -353,5 +395,40 @@ public class LIRequest : LIRequestBase {
     
     override func callbackSuccess(with response: AnyObject?) {
         success(response: response)
+    }
+
+    
+    @available(*,deprecated:1.6,message:"callbackSuccess(with:) instead")
+    override func callbackSuccess(_ response: AnyObject?) {
+        self.callbackSuccess(with: response)
+        
+    }
+    @available(*,deprecated: 1.6,message: "use callbackFailure(with:) instead")
+    override func callbackFailure(_ object: AnyObject?,withErrorMessage errorText : String) {
+        self.callbackFailure(with: object, andErrorMessage: errorText)
+    }
+    @available(*,deprecated: 1.6,message: "use callbackFailure(with:) instead")
+    override func callbackFailure(_ errorMessage : String) {
+        self.callbackFailure(with: errorMessage)
+    }
+    @available(*,deprecated: 1.6,message: "use callbackIsComplete(with:) instead")
+    override func callbackIsComplete(_ state : Bool) {
+        self.callbackIsComplete(with: state)
+    }
+    @available(*,deprecated: 1.6,message: "use setFailure(withObject:) instead")
+    public func setFailureWithObject(_ failureHandler : (object : AnyObject?,errorMessage : String)->Void) {
+        self.setFailure(withObject: failureHandler)
+    }
+    @available(*,deprecated:1.6,message:"use setFailure(with:) instead")
+    public func setFailure(_ failureHandler : (errorMessage : String)->Void) {
+        self.setFailure(with: failureHandler)
+    }
+    @available(*,deprecated:1.6,message:"use setSuccess(with:) instead")
+    public func setSuccess(_ successHandler : (responseObject:AnyObject?)->Void) {
+        self.setSuccess(with: successHandler)
+    }
+    @available(*,deprecated:1.6,message:"use setIsComplete(with:) instead")
+    public func setIsComplete(_ isCompleteHandler : (request:LIRequest, state : Bool)->Void) {
+        self.setIsComplete(with: isCompleteHandler)
     }
 }
