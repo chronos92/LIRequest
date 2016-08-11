@@ -10,10 +10,12 @@ import Foundation
 import AFNetworking
 
 public enum LIRequestContentType : String {
-    case TextPlain = "text/plain"
-    case ApplicationJson = "application/json"
-    case TextHtml = "text/html"
-    case ImageJpeg = "image/jpeg"
+    case textPlain = "text/plain"
+    case applicationJson = "application/json"
+    case textHtml = "text/html"
+    case imageJpeg = "image/jpeg"
+    case MP3File = "audio/mpeg"
+    case WAVEAudioFile = "audio/x-wav"
 }
 
 public func == (l1 : LIRequestBase, l2 : LIRequestBase) -> Bool {
@@ -21,7 +23,7 @@ public func == (l1 : LIRequestBase, l2 : LIRequestBase) -> Bool {
 }
 
 public class LIRequestBase : Equatable {
-    let LIUID : String = NSUUID().UUIDString
+    let LIUID : String = UUID().uuidString
     private var contentType : LIRequestContentType
     private(set) var callbackName : String
     private var loginUsername : String?
@@ -33,7 +35,7 @@ public class LIRequestBase : Equatable {
     private var callbackForNextCall : Bool = false
     private var contentTypeForNexCall : Bool = false
     private var manager : AFHTTPSessionManager
-    private var readingOption : NSJSONReadingOptions? = nil
+    private var readingOption : JSONSerialization.ReadingOptions? = nil
     private var userAgent : String? = nil
     //MARK: INIT & SET
     public init(contentType ct : LIRequestContentType, callbackName cn : String = "data") {
@@ -42,13 +44,13 @@ public class LIRequestBase : Equatable {
         manager = AFHTTPSessionManager()
     }
     
-    public func setCallbackNameForNextCall(callback : String) {
+    public func setCallbackNameForNextCall(_ callback : String) {
         callbackForNextCall = true
         previousCallbackName = callbackName
         callbackName = callback
     }
     
-    public func setContentTypeForNextCall(contentType : LIRequestContentType, subContentType sub : LIRequestContentType? = nil, readingOption : NSJSONReadingOptions? = nil) {
+    public func setContentTypeForNextCall(_ contentType : LIRequestContentType, subContentType sub : LIRequestContentType? = nil, readingOption : JSONSerialization.ReadingOptions? = nil) {
         self.subContentType = sub
         self.readingOption = readingOption
         contentTypeForNexCall = true
@@ -56,17 +58,17 @@ public class LIRequestBase : Equatable {
         self.contentType = contentType
     }
     
-    public func setLoginUsername(username : String, andLoginPassword password : String) {
+    public func setLoginUsername(_ username : String, andLoginPassword password : String) {
         requestWithLogin = true
         loginUsername = username
         loginPassword = password
     }
     
-    public func setUserAgent(userAgent : String) {
+    public func setUserAgent(_ userAgent : String) {
         self.userAgent = userAgent
     }
     //MARK: GET
-    public func get(url : String, andParams params : [String: AnyObject]? = nil) -> NSURLSessionDataTask? {
+    public func get(_ url : String, andParams params : [String: AnyObject]? = nil) -> URLSessionDataTask? {
         let requestSerializer = AFHTTPRequestSerializer()
         if requestWithLogin {
             requestSerializer.setAuthorizationHeaderFieldWithUsername(self.loginUsername!, password: self.loginPassword!)
@@ -93,7 +95,7 @@ public class LIRequestBase : Equatable {
         manager.requestSerializer = requestSerializer
         
         NSLog("Nuova chiamata GET : %@", url)
-        return manager.GET(url, parameters: params, progress: nil, success: { (dataTask, responseObject) -> Void in
+        return manager.get(url, parameters: params, progress: nil, success: { (dataTask, responseObject) -> Void in
             
             NSLog("Risposta success per : %@", url)
             if self.contentType == .ApplicationJson || self.contentType == .TextPlain {
@@ -139,11 +141,11 @@ public class LIRequestBase : Equatable {
         }
     }
     //MARK: POST
-    public func post(url : String, andParams params : [String:AnyObject]? = nil) -> NSURLSessionDataTask? {
+    public func post(_ url : String, andParams params : [String:AnyObject]? = nil) -> URLSessionDataTask? {
         let requestSerializer = AFHTTPRequestSerializer()
         if params != nil {
-            let data = try! NSJSONSerialization.dataWithJSONObject(params!, options: NSJSONWritingOptions.PrettyPrinted)
-            NSLog("%@",String(data: data, encoding: NSUTF8StringEncoding)!)
+            let data = try! JSONSerialization.data(withJSONObject: params!, options: JSONSerialization.WritingOptions.prettyPrinted)
+            NSLog("%@",String(data: data, encoding: String.Encoding.utf8)!)
         }
         if requestWithLogin {
             requestSerializer.setAuthorizationHeaderFieldWithUsername(self.loginUsername!, password: self.loginPassword!)
@@ -171,7 +173,7 @@ public class LIRequestBase : Equatable {
         
         NSLog("Nuova chiamata POST : %@", url)
         
-        return manager.POST(url, parameters: params, progress: nil, success: { (dataTask, responseObject) -> Void in
+        return manager.post(url, parameters: params, progress: nil, success: { (dataTask, responseObject) -> Void in
             if self.contentType == .ApplicationJson || self.contentType == .TextPlain {
                 if let obj = responseObject as? [String:AnyObject] {
                     if !(obj["success"] as? Bool ?? true) {
@@ -216,20 +218,20 @@ public class LIRequestBase : Equatable {
         }
     }
     
-    public func post(url : String, andImage image : UIImage, withFileName name : String, andParams params : [String:AnyObject]?) -> NSURLSessionDataTask?{
+    public func post(_ url : String, andImage image : UIImage, withFileName name : String, andParams params : [String:AnyObject]?) -> URLSessionDataTask?{
         return post(url, andImage: image, withFileName: name, andParams: params, andParamsName: nil, uploadProgressBlock: nil)
     }
     
-    public func post(url : String, andImage image : UIImage, withFileName name : String, andParams params : [String:AnyObject]?, uploadProgressBlock block : (percentage:NSProgress)->Void) -> NSURLSessionDataTask?{
+    public func post(_ url : String, andImage image : UIImage, withFileName name : String, andParams params : [String:AnyObject]?, uploadProgressBlock block : (percentage:Progress)->Void) -> URLSessionDataTask?{
         return post(url, andImage: image, withFileName: name, andParams: params, andParamsName: nil, uploadProgressBlock: block)
     }
     
-    public func post(url : String, andImage image : UIImage, withFileName fileName : String, andParams params : [String:AnyObject]?, andParamsName paramsName : String?, uploadProgressBlock block : ((percentage:NSProgress)-> Void)?) -> NSURLSessionDataTask? {
+    public func post(_ url : String, andImage image : UIImage, withFileName fileName : String, andParams params : [String:AnyObject]?, andParamsName paramsName : String?, uploadProgressBlock block : ((percentage:Progress)-> Void)?) -> URLSessionDataTask? {
         let imageData = UIImageJPEGRepresentation(image, 0.5)
         return post(url, andData: imageData!,withFileName: fileName,andParams: params,andParamsName: paramsName,uploadProgressBlock: block)
     }
     
-    public func post(url : String, andData data : NSData, withFileName fileName : String, andParams params : [String:AnyObject]?, andParamsName paramsName : String?, uploadProgressBlock block : ((progress : NSProgress)->Void)?) -> NSURLSessionDataTask? {
+    public func post(_ url : String, andData data : Data, withFileName fileName : String, andParams params : [String:AnyObject]?, andParamsName paramsName : String?, uploadProgressBlock block : ((progress : Progress)->Void)?) -> URLSessionDataTask? {
         let requestSerializer = AFHTTPRequestSerializer()
         requestSerializer.setValue(LIRequestContentType.ImageJpeg.rawValue, forHTTPHeaderField: "Content-Type")
         if requestWithLogin {
@@ -249,10 +251,10 @@ public class LIRequestBase : Equatable {
         
         NSLog("Nuova chiamata POST : %@", url)
         
-        return manager.POST(url, parameters: params, constructingBodyWithBlock: { (formData) -> Void in
-            formData.appendPartWithFileData(data, name: paramsName ?? "", fileName: fileName, mimeType: LIRequestContentType.ImageJpeg.rawValue)
+        return manager.post(url, parameters: params, constructingBodyWith: { (formData) -> Void in
+            formData.appendPart(fileData: data, name: paramsName ?? "", fileName: fileName, mimeType: LIRequestContentType.ImageJpeg.rawValue)
             }, progress: { (progress) -> Void in
-                dispatch_async(dispatch_get_main_queue(), {
+                DispatchQueue.main.async(execute: {
                     block?(progress: progress)
                 })
             }, success: { (dataTask, responseObject) -> Void in
@@ -289,18 +291,18 @@ public class LIRequestBase : Equatable {
         }
     }
     //MARK: CALLBACK
-    func callbackFailure(object : AnyObject?,withErrorMessage errorText : String) {
+    func callbackFailure(_ object : AnyObject?,withErrorMessage errorText : String) {
         
     }
-    func callbackFailure(errorMessage : String) {
-        
-    }
-    
-    func callbackSuccess(response : AnyObject?) {
+    func callbackFailure(_ errorMessage : String) {
         
     }
     
-    func callbackIsComplete(state : Bool) {
+    func callbackSuccess(_ response : AnyObject?) {
+        
+    }
+    
+    func callbackIsComplete(_ state : Bool) {
         
     }
     
@@ -315,34 +317,34 @@ public class LIRequest : LIRequestBase {
     internal var failure : (errorMessage : String)->Void = {_ in }
     internal var isComplete : ((request : LIRequest, state : Bool)->Void)?
     
-    public func setIsComplete(isCompleteHandler : (request:LIRequest, state : Bool)->Void) {
+    public func setIsComplete(_ isCompleteHandler : (request:LIRequest, state : Bool)->Void) {
         isComplete = isCompleteHandler
     }
     
-    public func setSuccess(successHandler : (responseObject:AnyObject?)->Void) {
+    public func setSuccess(_ successHandler : (responseObject:AnyObject?)->Void) {
         success = successHandler
     }
     
-    public func setFailure(failureHandler : (errorMessage : String)->Void) {
+    public func setFailure(_ failureHandler : (errorMessage : String)->Void) {
         failure = failureHandler
     }
-    @available(*,unavailable,renamed="setFailureWithObject(failureHandler:(object:errorMessage:))")
-    public func setFailureWithObject(failureHandler : (object : AnyObject?)->Void) {}
+    @available(*,unavailable,renamed: "setFailureWithObject(failureHandler:(object:errorMessage:))")
+    public func setFailureWithObject(_ failureHandler : (object : AnyObject?)->Void) {}
     
-    public func setFailureWithObject(failureHandler : (object : AnyObject?,errorMessage : String)->Void) {
+    public func setFailureWithObject(_ failureHandler : (object : AnyObject?,errorMessage : String)->Void) {
         failureObject = failureHandler
     }
     
-    override func callbackIsComplete(state : Bool) {
+    override func callbackIsComplete(_ state : Bool) {
         self.isComplete?(request: self,state: state)
     }
     
-    override func callbackFailure(errorMessage : String) {
+    override func callbackFailure(_ errorMessage : String) {
         NSLog("Error call : %@", errorMessage)
         failure(errorMessage: errorMessage)
     }
     
-    override func callbackFailure(object: AnyObject?,withErrorMessage errorText : String) {
+    override func callbackFailure(_ object: AnyObject?,withErrorMessage errorText : String) {
         if failureObject != nil {
             failureObject!(object: object,errorMessage : errorText)
         } else {
@@ -350,7 +352,7 @@ public class LIRequest : LIRequestBase {
         }
     }
     
-    override func callbackSuccess(response: AnyObject?) {
+    override func callbackSuccess(_ response: AnyObject?) {
         success(response: response)
     }
 }
