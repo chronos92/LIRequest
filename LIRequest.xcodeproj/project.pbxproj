@@ -99,7 +99,7 @@
 		A17BE44B1C99A1FB002A1673 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0720;
+				LastUpgradeCheck = 0800;
 				ORGANIZATIONNAME = "Boris Falcinelli";
 				TargetAttributes = {
 					A17BE4531C99A1FB002A1673 = {
@@ -277,6 +277,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = it.borisfalcinelli.LIRequest;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
 				SWIFT_VERSION = 3.0;
 			};
 			name = Release;
