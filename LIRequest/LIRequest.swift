@@ -34,6 +34,7 @@ public class LIRequestBase : Equatable {
     private var contentTypeForNexCall : Bool = false
     private var manager : AFHTTPSessionManager
     private var readingOption : NSJSONReadingOptions? = nil
+    private var userAgent : String? = nil
     //MARK: INIT & SET
     public init(contentType ct : LIRequestContentType, callbackName cn : String = "data") {
         contentType = ct
@@ -60,11 +61,18 @@ public class LIRequestBase : Equatable {
         loginUsername = username
         loginPassword = password
     }
+    
+    public func setUserAgent(userAgent : String) {
+        self.userAgent = userAgent
+    }
     //MARK: GET
     public func get(url : String, andParams params : [String: AnyObject]? = nil) -> NSURLSessionDataTask? {
         let requestSerializer = AFHTTPRequestSerializer()
         if requestWithLogin {
             requestSerializer.setAuthorizationHeaderFieldWithUsername(self.loginUsername!, password: self.loginPassword!)
+        }
+        if let ua = userAgent {
+            requestSerializer.setValue(ua, forHTTPHeaderField: "User-Agent")
         }
         var responseSerializer : AFHTTPResponseSerializer
         switch contentType {
@@ -139,6 +147,9 @@ public class LIRequestBase : Equatable {
         }
         if requestWithLogin {
             requestSerializer.setAuthorizationHeaderFieldWithUsername(self.loginUsername!, password: self.loginPassword!)
+        }
+        if let ua = userAgent {
+            requestSerializer.setValue(ua, forHTTPHeaderField: "User-Agent")
         }
         var responseSerializer : AFHTTPResponseSerializer
         switch contentType {
@@ -223,6 +234,9 @@ public class LIRequestBase : Equatable {
         requestSerializer.setValue(LIRequestContentType.ImageJpeg.rawValue, forHTTPHeaderField: "Content-Type")
         if requestWithLogin {
             requestSerializer.setAuthorizationHeaderFieldWithUsername(loginUsername!, password: loginPassword!)
+        }
+        if let ua = userAgent {
+            requestSerializer.setValue(ua, forHTTPHeaderField: "User-Agent")
         }
         var responseSerializer : AFHTTPResponseSerializer
         switch contentType {
