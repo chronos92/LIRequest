@@ -36,7 +36,7 @@ public class LIRequestBase : Equatable {
     private var manager : AFHTTPSessionManager
     private var readingOption : NSJSONReadingOptions? = nil
     private var userAgent : String? = nil
-    public var showNetworkActivityIndicatorVisible : Bool = true
+    public var showNetworkActivityIndicator : Bool = true
     //MARK: INIT & SET
     public init(contentType ct : LIRequestContentType, callbackName cn : String = "data") {
         contentType = ct
@@ -95,7 +95,7 @@ public class LIRequestBase : Equatable {
         manager.requestSerializer = requestSerializer
         
         NSLog("Nuova chiamata GET : %@", url)
-        UIApplication.sharedApplication().networkActivityIndicatorVisible = showNetworkActivityIndicatorVisibleVisible
+        UIApplication.sharedApplication().networkActivityIndicatorVisible = showNetworkActivityIndicator
         return manager.GET(url, parameters: params, progress: nil, success: { (dataTask, responseObject) -> Void in
             UIApplication.sharedApplication().networkActivityIndicatorVisible = false
             NSLog("Risposta success per : %@", url)
@@ -174,7 +174,7 @@ public class LIRequestBase : Equatable {
         manager.requestSerializer = requestSerializer
         
         NSLog("Nuova chiamata POST : %@", url)
-        UIApplication.sharedApplication().networkActivityIndicatorVisible = showNetworkActivityIndicatorVisibleVisible
+        UIApplication.sharedApplication().networkActivityIndicatorVisible = showNetworkActivityIndicator
         return manager.POST(url, parameters: params, progress: nil, success: { (dataTask, responseObject) -> Void in
             UIApplication.sharedApplication().networkActivityIndicatorVisible = false
             if self.contentType == .ApplicationJson || self.contentType == .TextPlain {
@@ -254,7 +254,7 @@ public class LIRequestBase : Equatable {
         manager.requestSerializer = requestSerializer
         
         NSLog("Nuova chiamata POST : %@", url)
-        UIApplication.sharedApplication().networkActivityIndicatorVisibleVisible = showNetworkActivityIndicatorVisibleVisible
+        UIApplication.sharedApplication().networkActivityIndicatorVisibleVisible = showNetworkActivityIndicator
         return manager.POST(url, parameters: params, constructingBodyWithBlock: { (formData) -> Void in
             formData.appendPartWithFileData(data, name: paramsName ?? "", fileName: fileName, mimeType: LIRequestContentType.ImageJpeg.rawValue)
             }, progress: { (progress) -> Void in
