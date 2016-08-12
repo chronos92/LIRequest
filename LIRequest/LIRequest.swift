@@ -254,7 +254,7 @@ public class LIRequestBase : Equatable {
         manager.requestSerializer = requestSerializer
         
         NSLog("Nuova chiamata POST : %@", url)
-        UIApplication.sharedApplication().networkActivityIndicatorVisibleVisible = showNetworkActivityIndicator
+        UIApplication.sharedApplication().networkActivityIndicatorVisible = showNetworkActivityIndicator
         return manager.POST(url, parameters: params, constructingBodyWithBlock: { (formData) -> Void in
             formData.appendPartWithFileData(data, name: paramsName ?? "", fileName: fileName, mimeType: LIRequestContentType.ImageJpeg.rawValue)
             }, progress: { (progress) -> Void in
@@ -262,7 +262,7 @@ public class LIRequestBase : Equatable {
                     block?(progress: progress)
                 })
             }, success: { (dataTask, responseObject) -> Void in
-                UIApplication.sharedApplication().networkActivityIndicatorVisibleVisible = false
+                UIApplication.sharedApplication().networkActivityIndicatorVisible = false
                 if responseObject is NSData {
                     if [LIRequestContentType.TextHtml,LIRequestContentType.TextPlain].contains(self.contentType) {
                         self.callbackSuccess(responseObject)
@@ -291,7 +291,7 @@ public class LIRequestBase : Equatable {
                 }
                 self.callbackIsComplete(true)
         }) { (dataTask, error) -> Void in
-            UIApplication.sharedApplication().networkActivityIndicatorVisibleVisible = false
+            UIApplication.sharedApplication().networkActivityIndicatorVisible = false
             self.callbackFailure(error.localizedDescription)
             self.callbackIsComplete(false)
         }
