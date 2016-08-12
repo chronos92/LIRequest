@@ -95,9 +95,9 @@ public class LIRequestBase : Equatable {
         manager.requestSerializer = requestSerializer
         
         NSLog("Nuova chiamata GET : %@", url)
-        UIApplication.sharedApplication().networkActivityIndicator = showNetworkActivityIndicator
+        UIApplication.sharedApplication().networkActivityIndicatorVisible = shownetworkActivityIndicatorVisible
         return manager.GET(url, parameters: params, progress: nil, success: { (dataTask, responseObject) -> Void in
-            UIApplication.sharedApplication().networkActivityIndicator = false
+            UIApplication.sharedApplication().networkActivityIndicatorVisible = false
             NSLog("Risposta success per : %@", url)
             if self.contentType == .ApplicationJson || self.contentType == .TextPlain {
                 if let obj = responseObject as? [String:AnyObject] {
@@ -136,7 +136,7 @@ public class LIRequestBase : Equatable {
             }
             self.callbackIsComplete(true)
         }) { (dataTask, error) -> Void in
-            UIApplication.sharedApplication().networkActivityIndicator = false
+            UIApplication.sharedApplication().networkActivityIndicatorVisible = false
             NSLog("Risposta failure per : %@", url)
             self.callbackFailure(error.localizedDescription)
             self.callbackIsComplete(false)
@@ -174,9 +174,9 @@ public class LIRequestBase : Equatable {
         manager.requestSerializer = requestSerializer
         
         NSLog("Nuova chiamata POST : %@", url)
-        UIApplication.sharedApplication().networkActivityIndicator = showNetworkActivityIndicator
+        UIApplication.sharedApplication().networkActivityIndicatorVisible = shownetworkActivityIndicatorVisible
         return manager.POST(url, parameters: params, progress: nil, success: { (dataTask, responseObject) -> Void in
-            UIApplication.sharedApplication().networkActivityIndicator = false
+            UIApplication.sharedApplication().networkActivityIndicatorVisible = false
             if self.contentType == .ApplicationJson || self.contentType == .TextPlain {
                 if let obj = responseObject as? [String:AnyObject] {
                     if !(obj["success"] as? Bool ?? true) {
@@ -214,7 +214,7 @@ public class LIRequestBase : Equatable {
             }
             self.callbackIsComplete(true)
         }) { (dataTask, error) -> Void in
-            UIApplication.sharedApplication().networkActivityIndicator = false
+            UIApplication.sharedApplication().networkActivityIndicatorVisible = false
             NSLog("Risposta failure per : %@", url)
             debugPrint(error)
             self.callbackFailure(error.localizedDescription)
@@ -254,7 +254,7 @@ public class LIRequestBase : Equatable {
         manager.requestSerializer = requestSerializer
         
         NSLog("Nuova chiamata POST : %@", url)
-        UIApplication.sharedApplication().networkActivityIndicator = showNetworkActivityIndicator
+        UIApplication.sharedApplication().networkActivityIndicatorVisibleVisible = shownetworkActivityIndicatorVisible
         return manager.POST(url, parameters: params, constructingBodyWithBlock: { (formData) -> Void in
             formData.appendPartWithFileData(data, name: paramsName ?? "", fileName: fileName, mimeType: LIRequestContentType.ImageJpeg.rawValue)
             }, progress: { (progress) -> Void in
@@ -262,7 +262,7 @@ public class LIRequestBase : Equatable {
                     block?(progress: progress)
                 })
             }, success: { (dataTask, responseObject) -> Void in
-                UIApplication.sharedApplication().networkActivityIndicator = false
+                UIApplication.sharedApplication().networkActivityIndicatorVisibleVisible = false
                 if responseObject is NSData {
                     if [LIRequestContentType.TextHtml,LIRequestContentType.TextPlain].contains(self.contentType) {
                         self.callbackSuccess(responseObject)
@@ -291,7 +291,7 @@ public class LIRequestBase : Equatable {
                 }
                 self.callbackIsComplete(true)
         }) { (dataTask, error) -> Void in
-            UIApplication.sharedApplication().networkActivityIndicator = false
+            UIApplication.sharedApplication().networkActivityIndicatorVisibleVisible = false
             self.callbackFailure(error.localizedDescription)
             self.callbackIsComplete(false)
         }
