@@ -8,6 +8,7 @@
 
 import Foundation
 import AFNetworking
+import UIKit
 
 public enum LIRequestContentType : String {
     case TextPlain = "text/plain"
@@ -35,6 +36,7 @@ public class LIRequestBase : Equatable {
     private var manager : AFHTTPSessionManager
     private var readingOption : NSJSONReadingOptions? = nil
     private var userAgent : String? = nil
+    public var showNetworkActivityIndicator : Bool = true
     //MARK: INIT & SET
     public init(contentType ct : LIRequestContentType, callbackName cn : String = "data") {
         contentType = ct
@@ -93,8 +95,9 @@ public class LIRequestBase : Equatable {
         manager.requestSerializer = requestSerializer
         
         NSLog("Nuova chiamata GET : %@", url)
+        UIApplication.sharedApplication().networkActivityIndicator = showNetworkActivityIndicator
         return manager.GET(url, parameters: params, progress: nil, success: { (dataTask, responseObject) -> Void in
-            
+            UIApplication.sharedApplication().networkActivityIndicator = false
             NSLog("Risposta success per : %@", url)
             if self.contentType == .ApplicationJson || self.contentType == .TextPlain {
                 if let obj = responseObject as? [String:AnyObject] {
@@ -133,6 +136,7 @@ public class LIRequestBase : Equatable {
             }
             self.callbackIsComplete(true)
         }) { (dataTask, error) -> Void in
+            UIApplication.sharedApplication().networkActivityIndicator = false
             NSLog("Risposta failure per : %@", url)
             self.callbackFailure(error.localizedDescription)
             self.callbackIsComplete(false)
@@ -170,8 +174,9 @@ public class LIRequestBase : Equatable {
         manager.requestSerializer = requestSerializer
         
         NSLog("Nuova chiamata POST : %@", url)
-        
+        UIApplication.sharedApplication().networkActivityIndicator = showNetworkActivityIndicator
         return manager.POST(url, parameters: params, progress: nil, success: { (dataTask, responseObject) -> Void in
+            UIApplication.sharedApplication().networkActivityIndicator = false
             if self.contentType == .ApplicationJson || self.contentType == .TextPlain {
                 if let obj = responseObject as? [String:AnyObject] {
                     if !(obj["success"] as? Bool ?? true) {
@@ -209,6 +214,7 @@ public class LIRequestBase : Equatable {
             }
             self.callbackIsComplete(true)
         }) { (dataTask, error) -> Void in
+            UIApplication.sharedApplication().networkActivityIndicator = false
             NSLog("Risposta failure per : %@", url)
             debugPrint(error)
             self.callbackFailure(error.localizedDescription)
@@ -248,7 +254,7 @@ public class LIRequestBase : Equatable {
         manager.requestSerializer = requestSerializer
         
         NSLog("Nuova chiamata POST : %@", url)
-        
+        UIApplication.sharedApplication().networkActivityIndicator = showNetworkActivityIndicator
         return manager.POST(url, parameters: params, constructingBodyWithBlock: { (formData) -> Void in
             formData.appendPartWithFileData(data, name: paramsName ?? "", fileName: fileName, mimeType: LIRequestContentType.ImageJpeg.rawValue)
             }, progress: { (progress) -> Void in
@@ -256,6 +262,7 @@ public class LIRequestBase : Equatable {
                     block?(progress: progress)
                 })
             }, success: { (dataTask, responseObject) -> Void in
+                UIApplication.sharedApplication().networkActivityIndicator = false
                 if responseObject is NSData {
                     if [LIRequestContentType.TextHtml,LIRequestContentType.TextPlain].contains(self.contentType) {
                         self.callbackSuccess(responseObject)
@@ -284,6 +291,7 @@ public class LIRequestBase : Equatable {
                 }
                 self.callbackIsComplete(true)
         }) { (dataTask, error) -> Void in
+            UIApplication.sharedApplication().networkActivityIndicator = false
             self.callbackFailure(error.localizedDescription)
             self.callbackIsComplete(false)
         }
