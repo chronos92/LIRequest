@@ -240,8 +240,7 @@ public class LIRequestBase : Equatable {
     }
     
     public func post(to urlString : String, withImage image : UIImage, andFileName fileName : String, andParams params : [String:AnyObject]?, andParamsName paramsName : String?, uploadProgressBlock block : ((percentage:Progress)-> Void)?) -> URLSessionDataTask? {
-        let imageData = UIImageJPEGRepresentation(image, 0.5)
-        return post(to:urlString, withImage: imageData!,andFileName: fileName,andParams: params,andParamsName: paramsName,uploadProgressBlock: block)
+        return post(to:urlString, withImage: image,andFileName: fileName,andParams: params,andParamsName: paramsName,uploadProgressBlock: block)
     }
     
     public func post(to urlString : String, withData data : Data, withFileName fileName : String, andParams params : [String:AnyObject]?, andParamsName paramsName : String?, uploadProgressBlock block : ((progress : Progress)->Void)?) -> URLSessionDataTask? {
@@ -387,6 +386,7 @@ public class LIRequestBase : Equatable {
 public class LIRequest : LIRequestBase {
     internal var failureObject : ((object : AnyObject?,errorMessage : String)->Void)? = nil
     internal var success : (response:AnyObject?)->Void = {_ in }
+    internal var additionalSuccess : ((response:AnyObject?)->Void)?
     internal var failure : (errorMessage : String)->Void = {_ in }
     internal var isComplete : ((request : LIRequest, state : Bool)->Void)?
     
@@ -396,6 +396,10 @@ public class LIRequest : LIRequestBase {
     
     public func setSuccess(with successHandler : (responseObject:AnyObject?)->Void) {
         success = successHandler
+    }
+    
+    public func setAdditionalSuccess(with additionalSuccessHandler : ((responseObject:AnyObject?)->Void)?) {
+        self.additionalSuccess = additionalSuccessHandler
     }
     
     public func setFailure(with failureHandler : (errorMessage : String)->Void) {
@@ -428,9 +432,10 @@ public class LIRequest : LIRequestBase {
     }
     
     override func callbackSuccess(with response: AnyObject?) {
+        additionalSuccess?(response:response)
         success(response: response)
     }
-
+    
     
     @available(*,deprecated:1.6,message:"callbackSuccess(with:) instead")
     override func callbackSuccess(_ response: AnyObject?) {
