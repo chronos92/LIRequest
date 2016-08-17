@@ -320,6 +320,7 @@ public class LIRequestBase : Equatable {
 public class LIRequest : LIRequestBase {
     internal var failureObject : ((object : AnyObject?,errorMessage : String)->Void)? = nil
     internal var success : (response:AnyObject?)->Void = {_ in }
+    internal var additionalSuccess : ((response:AnyObject?)-> Void)?
     internal var failure : (errorMessage : String)->Void = {_ in }
     internal var isComplete : ((request : LIRequest, state : Bool)->Void)?
     
@@ -329,6 +330,10 @@ public class LIRequest : LIRequestBase {
     
     public func setSuccess(successHandler : (responseObject:AnyObject?)->Void) {
         success = successHandler
+    }
+    
+    public func setAdditionalSuccess(additionalSuccessHandler : ((responseObject:AnyObject?)->Void)?) {
+        self.additionalSuccess = additionalSuccessHandler
     }
     
     public func setFailure(failureHandler : (errorMessage : String)->Void) {
@@ -359,6 +364,7 @@ public class LIRequest : LIRequestBase {
     }
     
     override func callbackSuccess(response: AnyObject?) {
+        additionalSuccess?(response:response)
         success(response: response)
     }
 }
