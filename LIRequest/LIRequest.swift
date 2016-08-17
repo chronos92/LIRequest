@@ -77,7 +77,7 @@ public class LIRequestBase : Equatable {
         self.userAgent = userAgent
     }
     //MARK: GET
-    public func get(_ url : String, andParams params : [String: AnyObject]? = nil) -> URLSessionDataTask? {
+    public func get(to urlString : String, withParams params : [String: AnyObject]? = nil) -> URLSessionDataTask? {
         let requestSerializer = AFHTTPRequestSerializer()
         if requestWithLogin {
             requestSerializer.setAuthorizationHeaderFieldWithUsername(self.loginUsername!, password: self.loginPassword!)
@@ -103,11 +103,11 @@ public class LIRequestBase : Equatable {
         manager.responseSerializer = responseSerializer
         manager.requestSerializer = requestSerializer
         
-        NSLog("Nuova chiamata GET : %@", url)
+        NSLog("Nuova chiamata GET : %@", urlString)
         UIApplication.shared().isNetworkActivityIndicatorVisible = showNetworkActivityIndicator
-        return manager.get(url, parameters: params, progress: nil, success: { (dataTask, responseObject) -> Void in
+        return manager.get(urlString, parameters: params, progress: nil, success: { (dataTask, responseObject) -> Void in
             UIApplication.shared().isNetworkActivityIndicatorVisible = false
-            NSLog("Risposta success per : %@", url)
+            NSLog("Risposta success per : %@", urlString)
             if self.contentType == .applicationJson || self.contentType == .textPlain {
                 if let obj = responseObject as? [String:AnyObject] {
                     if !(obj["success"] as? Bool ?? true) {
@@ -146,13 +146,13 @@ public class LIRequestBase : Equatable {
             self.callbackIsComplete(with: true)
         }) { (dataTask, error) -> Void in
             UIApplication.shared().isNetworkActivityIndicatorVisible = false
-            NSLog("Risposta failure per : %@", url)
+            NSLog("Risposta failure per : %@", urlString)
             self.callbackFailure(with: error.localizedDescription)
             self.callbackIsComplete(with: false)
         }
     }
     //MARK: POST
-    public func post(_ url : String, andParams params : [String:AnyObject]? = nil) -> URLSessionDataTask? {
+    public func post(to urlString : String, withParams params : [String:AnyObject]? = nil) -> URLSessionDataTask? {
         let requestSerializer = AFHTTPRequestSerializer()
         if params != nil {
             let data = try! JSONSerialization.data(withJSONObject: params!, options: JSONSerialization.WritingOptions.prettyPrinted)
@@ -182,9 +182,9 @@ public class LIRequestBase : Equatable {
         manager.responseSerializer = responseSerializer
         manager.requestSerializer = requestSerializer
         
-        NSLog("Nuova chiamata POST : %@", url)
+        NSLog("Nuova chiamata POST : %@", urlString)
         UIApplication.shared().isNetworkActivityIndicatorVisible = showNetworkActivityIndicator
-        return manager.post(url, parameters: params, progress: nil, success: { (dataTask, responseObject) -> Void in
+        return manager.post(urlString, parameters: params, progress: nil, success: { (dataTask, responseObject) -> Void in
             UIApplication.shared().isNetworkActivityIndicatorVisible = false
             if self.contentType == .applicationJson || self.contentType == .textPlain {
                 if let obj = responseObject as? [String:AnyObject] {
@@ -196,7 +196,7 @@ public class LIRequestBase : Equatable {
                             self.callbackFailure(with: obj["message"] as! String)
                         }
                     } else {
-                        NSLog("Risposta success per : %@", url)
+                        NSLog("Risposta success per : %@", urlString)
                         let currentCallback = self.callbackName
                         if self.callbackForNextCall {
                             self.callbackForNextCall = false
@@ -224,27 +224,27 @@ public class LIRequestBase : Equatable {
             self.callbackIsComplete(with: true)
         }) { (dataTask, error) -> Void in
             UIApplication.shared().isNetworkActivityIndicatorVisible = false
-            NSLog("Risposta failure per : %@", url)
+            NSLog("Risposta failure per : %@", urlString)
             debugPrint(error)
             self.callbackFailure(with: error.localizedDescription)
             self.callbackIsComplete(with: false)
         }
     }
     
-    public func post(_ url : String, andImage image : UIImage, withFileName name : String, andParams params : [String:AnyObject]?) -> URLSessionDataTask?{
-        return post(url, andImage: image, withFileName: name, andParams: params, andParamsName: nil, uploadProgressBlock: nil)
+    public func post(to urlString : String, withImage image : UIImage, andFileName name : String, andParams params : [String:AnyObject]?) -> URLSessionDataTask?{
+        return post(to:urlString, withImage: image, andFileName: name, andParams: params, andParamsName: nil, uploadProgressBlock: nil)
     }
     
-    public func post(_ url : String, andImage image : UIImage, withFileName name : String, andParams params : [String:AnyObject]?, uploadProgressBlock block : (percentage:Progress)->Void) -> URLSessionDataTask?{
-        return post(url, andImage: image, withFileName: name, andParams: params, andParamsName: nil, uploadProgressBlock: block)
+    public func post(to urlString : String, withImage image : UIImage, andFileName name : String, andParams params : [String:AnyObject]?, uploadProgressBlock block : (percentage:Progress)->Void) -> URLSessionDataTask?{
+        return post(to:urlString, withImage: image, andFileName: name, andParams: params, andParamsName: nil, uploadProgressBlock: block)
     }
     
-    public func post(_ url : String, andImage image : UIImage, withFileName fileName : String, andParams params : [String:AnyObject]?, andParamsName paramsName : String?, uploadProgressBlock block : ((percentage:Progress)-> Void)?) -> URLSessionDataTask? {
+    public func post(to urlString : String, withImage image : UIImage, andFileName fileName : String, andParams params : [String:AnyObject]?, andParamsName paramsName : String?, uploadProgressBlock block : ((percentage:Progress)-> Void)?) -> URLSessionDataTask? {
         let imageData = UIImageJPEGRepresentation(image, 0.5)
-        return post(url, andData: imageData!,withFileName: fileName,andParams: params,andParamsName: paramsName,uploadProgressBlock: block)
+        return post(to:urlString, withImage: imageData!,andFileName: fileName,andParams: params,andParamsName: paramsName,uploadProgressBlock: block)
     }
     
-    public func post(_ url : String, andData data : Data, withFileName fileName : String, andParams params : [String:AnyObject]?, andParamsName paramsName : String?, uploadProgressBlock block : ((progress : Progress)->Void)?) -> URLSessionDataTask? {
+    public func post(to urlString : String, withData data : Data, withFileName fileName : String, andParams params : [String:AnyObject]?, andParamsName paramsName : String?, uploadProgressBlock block : ((progress : Progress)->Void)?) -> URLSessionDataTask? {
         let requestSerializer = AFHTTPRequestSerializer()
         requestSerializer.setValue(LIRequest.ContentType.imageJpeg.rawValue, forHTTPHeaderField: "Content-Type")
         if requestWithLogin {
@@ -262,9 +262,9 @@ public class LIRequestBase : Equatable {
         manager.responseSerializer = responseSerializer
         manager.requestSerializer = requestSerializer
         
-        NSLog("Nuova chiamata POST : %@", url)
+        NSLog("Nuova chiamata POST : %@", urlString)
         UIApplication.shared().isNetworkActivityIndicatorVisible = showNetworkActivityIndicator
-        return manager.post(url, parameters: params, constructingBodyWith: { (formData) -> Void in
+        return manager.post(urlString, parameters: params, constructingBodyWith: { (formData) -> Void in
             formData.appendPart(withFileData: data, name: paramsName ?? "", fileName: fileName, mimeType: LIRequest.ContentType.imageJpeg.rawValue)
             }, progress: { (progress) -> Void in
                 DispatchQueue.main.async(execute: {
@@ -355,6 +355,31 @@ public class LIRequestBase : Equatable {
     @available(*,deprecated:1.6,message: "use setForNextCall(callback:) instead")
     public func setCallbackNameForNextCall(_ callback : String) {
         self.setForNextCall(callback: callback)
+    }
+    
+    @available(*,deprecated:1.6,message: "use get(to:withParams:) instead")
+    public func get(_ url : String, andParams params : [String: AnyObject]? = nil) -> URLSessionDataTask? {
+        return get(to: url, withParams: params)
+    }
+    @available(*,deprecated:1.6,message: "use post(to:withParams:) instead")
+    public func post(_ url : String, andParams params : [String:AnyObject]? = nil) -> URLSessionDataTask? {
+        return post(to: url, withParams: params)
+    }
+    @available(*,deprecated:1.6,message: "use post(to:withImage:andFileName:andParams:) instead")
+    public func post(_ url : String, andImage image : UIImage, withFileName name : String, andParams params : [String:AnyObject]?) -> URLSessionDataTask? {
+        return post(to: url, withImage: image, andFileName: name, andParams: params)
+    }
+    @available(*,deprecated:1.6,message: "use post(to:withImage:andFileName:andParams:uploadProgressBlock:) instead")
+    public func post(_ url : String, andImage image : UIImage, withFileName name : String, andParams params : [String:AnyObject]?, uploadProgressBlock block : (percentage:Progress)->Void) -> URLSessionDataTask? {
+        return post(to: url, withImage: image, andFileName: name, andParams: params, uploadProgressBlock: block)
+    }
+    @available(*,deprecated:1.6,message: "use post(to:withImage:andFileName:params:andParamsName:uploadProgressBlock:) instead")
+    public func post(_ url : String, andImage image : UIImage, withFileName fileName : String, andParams params : [String:AnyObject]?, andParamsName paramsName : String?, uploadProgressBlock block : ((percentage:Progress)-> Void)?) -> URLSessionDataTask? {
+        return post(to: url, withImage: image, andFileName: fileName, andParams: params, andParamsName: paramsName, uploadProgressBlock: block)
+    }
+    @available(*,deprecated:1.6,message: "use post(to:withData:andFileName:andParams:andParamsName:uploadProgressBlock:) instead")
+    public func post(_ url : String, andData data : Data, withFileName fileName : String, andParams params : [String:AnyObject]?, andParamsName paramsName : String?, uploadProgressBlock block : ((progress : Progress)->Void)?) -> URLSessionDataTask? {
+        return post(to: url, withData: data, withFileName: fileName, andParams: params, andParamsName: paramsName, uploadProgressBlock: block)
     }
 
 }
