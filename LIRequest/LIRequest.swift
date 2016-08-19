@@ -111,11 +111,7 @@ public class LIRequestBase : Equatable {
             if self.contentType == .applicationJson || self.contentType == .textPlain {
                 if let obj = responseObject as? [String:AnyObject] {
                     if !(obj["success"] as? Bool ?? true) {
-                        if obj["data"] != nil {
-                            self.callbackFailure(with: obj["data"], andErrorMessage: obj["message"] as! String)
-                        } else {
-                            self.callbackFailure(with: obj["message"] as! String)
-                        }
+                            self.callbackFailure(with: obj, andErrorMessage: obj["message"] as! String)
                     } else {
                         let currentCallback = self.callbackName
                         if self.callbackForNextCall {
@@ -147,7 +143,7 @@ public class LIRequestBase : Equatable {
         }) { (dataTask, error) -> Void in
             UIApplication.shared().isNetworkActivityIndicatorVisible = false
             NSLog("Risposta failure per : %@", urlString)
-            self.callbackFailure(with: error.localizedDescription)
+            self.callbackFailure(with: nil, andErrorMessage: error.localizedDescription)
             self.callbackIsComplete(with: false)
         }
     }
@@ -310,10 +306,6 @@ public class LIRequestBase : Equatable {
         
     }
     
-    func callbackFailure(with errorMessage : String) {
-        
-    }
-    
     func callbackSuccess(with response : AnyObject?) {
         
     }
@@ -418,12 +410,8 @@ public class LIRequest : LIRequestBase {
         self.isComplete?(request: self,state: state)
     }
     
-    override func callbackFailure(with errorMessage : String) {
-        NSLog("Error call : %@", errorMessage)
-        failure(errorMessage: errorMessage)
-    }
-    
     override func callbackFailure(with object: AnyObject?,andErrorMessage errorText : String) {
+        NSLog("Error call : %@", errorMessage)
         if failureObject != nil {
             failureObject!(object: object,errorMessage : errorText)
         } else {
