@@ -102,8 +102,9 @@ public class LIRequestBase : Equatable {
             if self.contentType == .ApplicationJson || self.contentType == .TextPlain {
                 if let obj = responseObject as? [String:AnyObject] {
                     if !(obj["success"] as? Bool ?? true) {
-                        if obj["data"] != nil {
-                            self.callbackFailure(obj["data"], withErrorMessage: obj["message"] as! String)
+                        debugPrint(obj)
+                        if !obj.isEmpty {
+                            self.callbackFailure(obj,withErrorMessage:obj["message"] as! String)
                         } else {
                             self.callbackFailure(obj["message"] as! String)
                         }
@@ -181,8 +182,8 @@ public class LIRequestBase : Equatable {
                 if let obj = responseObject as? [String:AnyObject] {
                     if !(obj["success"] as? Bool ?? true) {
                         debugPrint(obj)
-                        if obj["data"] != nil && !(obj["data"]! as? [String:AnyObject] ?? [:]).isEmpty {
-                            self.callbackFailure(obj["data"],withErrorMessage:obj["message"] as! String)
+                        if !obj.isEmpty {
+                            self.callbackFailure(obj,withErrorMessage:obj["message"] as! String)
                         } else {
                             self.callbackFailure(obj["message"] as! String)
                         }
