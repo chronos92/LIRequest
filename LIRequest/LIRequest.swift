@@ -84,7 +84,7 @@ public class LIRequestBase : Equatable {
             if readingOption != nil {
                 (responseSerializer as! AFJSONResponseSerializer).readingOptions = readingOption!
             }
-        case.TextHtml : responseSerializer = AFHTTPResponseSerializer()
+        case.TextHtml,.ApplicationXwwwFormUrlencoded : responseSerializer = AFHTTPResponseSerializer()
         }
         responseSerializer.acceptableContentTypes = Set<String>(arrayLiteral:  contentType.rawValue)
         if subContentType != nil {
@@ -164,7 +164,7 @@ public class LIRequestBase : Equatable {
             if readingOption != nil {
                 (responseSerializer as! AFJSONResponseSerializer).readingOptions = readingOption!
             }
-        case .TextHtml : responseSerializer = AFHTTPResponseSerializer()
+        case .TextHtml,.ApplicationXwwwFormUrlencoded : responseSerializer = AFHTTPResponseSerializer()
         }
         responseSerializer.acceptableContentTypes = Set<String>(arrayLiteral: contentType.rawValue)
         if subContentType != nil {
@@ -249,7 +249,7 @@ public class LIRequestBase : Equatable {
         var responseSerializer : AFHTTPResponseSerializer
         switch contentType {
         case .ApplicationJson, .TextPlain, .ImageJpeg: responseSerializer = AFJSONResponseSerializer()
-        case .TextHtml: responseSerializer = AFHTTPResponseSerializer()
+        case .TextHtml,.ApplicationXwwwFormUrlencoded: responseSerializer = AFHTTPResponseSerializer()
         }
         responseSerializer.acceptableContentTypes = Set<String>(arrayLiteral:  contentType.rawValue,LIRequestContentType.TextPlain.rawValue)
         manager.responseSerializer = responseSerializer
