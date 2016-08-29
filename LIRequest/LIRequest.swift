@@ -95,6 +95,19 @@ public class LIRequestBase : Equatable {
         manager.responseSerializer = responseSerializer
         manager.requestSerializer = requestSerializer
         
+        if contentType == .ApplicationXwwwFormUrlencoded {
+            manager.requestSerializer.setQueryStringSerializationWithBlock({ (request, parameters, error) -> String in
+                do {
+                    let data = try NSJSONSerialization.dataWithJSONObject(parameters, options: NSJSONWritingOptions.PrettyPrinted)
+                    let string = NSString(data: data, encoding: NSUTF8StringEncoding)
+                    return String(string)
+                } catch {
+                    debugPrint("Errore nella codifica dei parametri")
+                    return ""
+                }
+            })
+        }
+        
         NSLog("Nuova chiamata GET : %@", url)
         UIApplication.sharedApplication().networkActivityIndicatorVisible = showNetworkActivityIndicator
         return manager.GET(url, parameters: params, progress: nil, success: { (dataTask, responseObject) -> Void in
@@ -146,7 +159,7 @@ public class LIRequestBase : Equatable {
     }
     //MARK: POST
     public func post(url : String, andParams params : [String:AnyObject]? = nil) -> NSURLSessionDataTask? {
-        let requestSerializer = AFHTTPRequestSerializer()
+        var requestSerializer = AFHTTPRequestSerializer()
         if params != nil {
             let data = try! NSJSONSerialization.dataWithJSONObject(params!, options: NSJSONWritingOptions.PrettyPrinted)
             NSLog("%@",String(data: data, encoding: NSUTF8StringEncoding)!)
@@ -159,13 +172,14 @@ public class LIRequestBase : Equatable {
         }
         var responseSerializer : AFHTTPResponseSerializer
         switch contentType {
-        case .ApplicationJson, .TextPlain,.ImageJpeg:
+        case .ApplicationJson, .TextPlain,.ImageJpeg,.ApplicationXwwwFormUrlencoded:
             responseSerializer = AFJSONResponseSerializer()
             if readingOption != nil {
                 (responseSerializer as! AFJSONResponseSerializer).readingOptions = readingOption!
             }
-        case .TextHtml,.ApplicationXwwwFormUrlencoded : responseSerializer = AFHTTPResponseSerializer()
+        case .TextHtml : responseSerializer = AFHTTPResponseSerializer()
         }
+        
         responseSerializer.acceptableContentTypes = Set<String>(arrayLiteral: contentType.rawValue)
         if subContentType != nil {
             responseSerializer.acceptableContentTypes?.insert(subContentType!.rawValue)
@@ -174,6 +188,19 @@ public class LIRequestBase : Equatable {
         }
         manager.responseSerializer = responseSerializer
         manager.requestSerializer = requestSerializer
+        
+        if contentType == .ApplicationXwwwFormUrlencoded {
+            manager.requestSerializer.setQueryStringSerializationWithBlock({ (request, parameters, error) -> String in
+                do {
+                    let data = try NSJSONSerialization.dataWithJSONObject(parameters, options: NSJSONWritingOptions.PrettyPrinted)
+                    let string = NSString(data: data, encoding: NSUTF8StringEncoding)
+                    return String(string)
+                } catch {
+                    debugPrint("Errore nella codifica dei parametri")
+                    return ""
+                }
+            })
+        }
         
         NSLog("Nuova chiamata POST : %@", url)
         UIApplication.sharedApplication().networkActivityIndicatorVisible = showNetworkActivityIndicator
