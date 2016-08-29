@@ -29,6 +29,7 @@ public class LIRequestBase : Equatable {
         case applicationJson = "application/json"
         case textHtml = "text/html"
         case imageJpeg = "image/jpeg"
+        case applicationXwwwFormUrlencoded = "application/x-www-form-urlencoded"
     }
     
     let LIUID : String = UUID().uuidString
@@ -178,10 +179,23 @@ public class LIRequestBase : Equatable {
         manager.responseSerializer = responseSerializer
         manager.requestSerializer = requestSerializer
         
+        if contentType == LIRequest.ContentType.applicationXwwwFormUrlencoded {
+            manager.requestSerializer.setQueryStringSerializationWithBlock({ (request, parameters, error) -> String in
+                do {
+                    let data = try JSONSerialization.data(withJSONObject: parameters, options: JSONSerialization.WritingOptions.prettyPrinted)
+                    let string = NSString(data: data, encoding: String.Encoding.utf8.rawValue)
+                    return String(describing:string)
+                } catch {
+                    debugPrint("Errore nella codifica dei parametri")
+                    return ""
+                }
+            })
+        }
+    
         NSLog("Nuova chiamata POST : %@", urlString)
-        UIApplication.shared().isNetworkActivityIndicatorVisible = showNetworkActivityIndicator
+        UIApplication.shared.isNetworkActivityIndicatorVisible = showNetworkActivityIndicator
         return manager.post(urlString, parameters: params, progress: nil, success: { (dataTask, responseObject) -> Void in
-            UIApplication.shared().isNetworkActivityIndicatorVisible = false
+            UIApplication.shared.isNetworkActivityIndicatorVisible = false
             if self.contentType == .applicationJson || self.contentType == .textPlain {
                 if let obj = responseObject as? [String:AnyObject] {
                     if !(obj["success"] as? Bool ?? true) {
