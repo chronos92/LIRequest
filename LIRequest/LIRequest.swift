@@ -159,7 +159,7 @@ public class LIRequestBase : Equatable {
     }
     //MARK: POST
     public func post(url : String, andParams params : [String:AnyObject]? = nil) -> NSURLSessionDataTask? {
-        var requestSerializer = AFHTTPRequestSerializer()
+        let requestSerializer = AFHTTPRequestSerializer()
         if params != nil {
             let data = try! NSJSONSerialization.dataWithJSONObject(params!, options: NSJSONWritingOptions.PrettyPrinted)
             NSLog("%@",String(data: data, encoding: NSUTF8StringEncoding)!)
