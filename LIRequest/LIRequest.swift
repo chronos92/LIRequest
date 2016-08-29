@@ -15,6 +15,7 @@ public enum LIRequestContentType : String {
     case ApplicationJson = "application/json"
     case TextHtml = "text/html"
     case ImageJpeg = "image/jpeg"
+    case ApplicationXwwwFormUrlencoded = "application/x-www-form-urlencoded"
 }
 
 public func == (l1 : LIRequestBase, l2 : LIRequestBase) -> Bool {
