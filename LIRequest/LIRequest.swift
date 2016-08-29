@@ -172,12 +172,12 @@ public class LIRequestBase : Equatable {
         }
         var responseSerializer : AFHTTPResponseSerializer
         switch contentType {
-        case .ApplicationJson, .TextPlain,.ImageJpeg,.ApplicationXwwwFormUrlencoded:
+        case .ApplicationJson, .TextPlain,.ImageJpeg:
             responseSerializer = AFJSONResponseSerializer()
             if readingOption != nil {
                 (responseSerializer as! AFJSONResponseSerializer).readingOptions = readingOption!
             }
-        case .TextHtml : responseSerializer = AFHTTPResponseSerializer()
+        case .TextHtml,.ApplicationXwwwFormUrlencoded : responseSerializer = AFHTTPResponseSerializer()
         }
         
         responseSerializer.acceptableContentTypes = Set<String>(arrayLiteral: contentType.rawValue)
