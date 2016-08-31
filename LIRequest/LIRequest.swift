@@ -30,6 +30,9 @@ public class LIRequest : Equatable {
         case imageJpeg = "image/jpeg"
         //case applicationXwwwFormUrlencoded = "application/x-www-form-urlencoded"
     }
+    private enum Method : String {
+        case post = "POST"
+        case get = "GET"
     }
     
     /**
@@ -129,8 +132,9 @@ public class LIRequest : Equatable {
         self.userAgent = userAgent
     }
     
-    //MARK: GET
-    public func get(to urlString : String, withParams params : [String: AnyObject]? = nil) -> URLSessionDataTask? {
+    private func action(withMethod method : Method, toUrl urlString : String, withParams params : [String:AnyObject]?) -> URLSessionDataTask? {
+        UIApplication.shared.isNetworkActivityIndicatorVisible = showNetworkActivityIndicator
+
         let requestSerializer = AFHTTPRequestSerializer()
         if requestWithLogin {
             requestSerializer.setAuthorizationHeaderFieldWithUsername(self.loginUsername!, password: self.loginPassword!)
@@ -156,137 +160,66 @@ public class LIRequest : Equatable {
         manager.responseSerializer = responseSerializer
         manager.requestSerializer = requestSerializer
         
-        NSLog("Nuova chiamata GET : %@", urlString)
+        NSLog("Nuova chiamata %@ : %@", method.rawValue,urlString)
         UIApplication.shared.isNetworkActivityIndicatorVisible = showNetworkActivityIndicator
-        return manager.get(urlString, parameters: params, progress: nil, success: { (dataTask, responseObject) -> Void in
-            UIApplication.shared.isNetworkActivityIndicatorVisible = false
-            NSLog("Risposta success per : %@", urlString)
-            if self.contentType == .applicationJson || self.contentType == .textPlain {
-                if let obj = responseObject as? [String:AnyObject] {
-                    if !(obj["success"] as? Bool ?? true) {
-                        self.callbackFailure(with: obj as AnyObject?, andErrorMessage: obj["message"] as! String)
-                    } else {
-                        let currentCallback = self.callbackName
-                        if self.callbackForNextCall {
-                            self.callbackForNextCall = false
-                            self.callbackName = self.previousCallbackName!
-                            self.previousCallbackName = nil
-                        }
-                        if let responseDict = responseObject as? [String:AnyObject] {
-                            if currentCallback == "" {
-                                self.callbackSuccess(with: responseDict as AnyObject?)
-                            } else {
-                                self.callbackSuccess(with: responseDict[currentCallback])
-                            }
-                        } else {
-                            self.callbackSuccess(with: responseObject as AnyObject?)
-                        }
-                    }
+        switch method {
+        case .get:
+            return manager.get(urlString, parameters: params, progress: nil, success: self.successCallbackBlock, failure: self.failureCallbackBlock)
+        case .post:
+            return manager.post(urlString, parameters: params, progress: nil, success: self.successCallbackBlock, failure: self.failureCallbackBlock)
+        }
+    }
+    
+    private lazy var successCallbackBlock : (URLSessionDataTask,Any?)->Void = {dataTask,responseObject in
+        UIApplication.shared.isNetworkActivityIndicatorVisible = false
+        if self.contentType == .applicationJson || self.contentType == .textPlain {
+            if let obj = responseObject as? [String:AnyObject] {
+                if !(obj["success"] as? Bool ?? true) {
+                    self.callbackFailure(with: obj as AnyObject?, andErrorMessage: obj["message"] as! String)
                 } else {
-                    self.callbackSuccess(with: responseObject as AnyObject?)
+                    let currentCallback = self.callbackName
+                    if self.callbackForNextCall {
+                        self.callbackForNextCall = false
+                        self.callbackName = self.previousCallbackName!
+                        self.previousCallbackName = nil
+                    }
+                    if let responseDict = responseObject as? [String:AnyObject] {
+                        if currentCallback == "" {
+                            self.callbackSuccess(with: responseDict as AnyObject?)
+                        } else {
+                            self.callbackSuccess(with: responseDict[currentCallback])
+                        }
+                    } else {
+                        self.callbackSuccess(with: responseObject as AnyObject?)
+                    }
                 }
             } else {
                 self.callbackSuccess(with: responseObject as AnyObject?)
             }
-            if self.contentTypeForNexCall {
-                self.contentTypeForNexCall = false
-                self.contentType = self.previousContentType!
-            }
-            self.callbackIsComplete(with: true)
-        }) { (dataTask, error) -> Void in
-            UIApplication.shared.isNetworkActivityIndicatorVisible = false
-            NSLog("Risposta failure per : %@", urlString)
-            self.callbackFailure(with: nil, andErrorMessage: error.localizedDescription)
-            self.callbackIsComplete(with: false)
+        } else {
+            self.callbackSuccess(with: responseObject as AnyObject?)
         }
+        if self.contentTypeForNexCall {
+            self.contentTypeForNexCall = false
+            self.contentType = self.previousContentType!
+        }
+        self.callbackIsComplete(with: true)
+    }
+    
+    private lazy var failureCallbackBlock : (URLSessionDataTask?,Error)->Void = {dataTask,error in
+        UIApplication.shared.isNetworkActivityIndicatorVisible = false
+        NSLog("Risposta failure per : %@", dataTask?.currentRequest?.url?.absoluteString ?? "-")
+        self.callbackFailure(with: nil, andErrorMessage: error.localizedDescription)
+        self.callbackIsComplete(with: false)
+    }
+    
+    //MARK: GET
+    public func get(to urlString : String, withParams params : [String: AnyObject]? = nil) -> URLSessionDataTask? {
+        return self.action(withMethod: .get, toUrl: urlString, withParams: params)
     }
     //MARK: POST
     public func post(to urlString : String, withParams params : [String:AnyObject]? = nil) -> URLSessionDataTask? {
-        let requestSerializer = AFHTTPRequestSerializer()
-        if params != nil {
-            let data = try! JSONSerialization.data(withJSONObject: params!, options: JSONSerialization.WritingOptions.prettyPrinted)
-            NSLog("%@",String(data: data, encoding: String.Encoding.utf8)!)
-        }
-        if requestWithLogin {
-            requestSerializer.setAuthorizationHeaderFieldWithUsername(self.loginUsername!, password: self.loginPassword!)
-        }
-        if let ua = userAgent {
-            requestSerializer.setValue(ua, forHTTPHeaderField: "User-Agent")
-        }
-        var responseSerializer : AFHTTPResponseSerializer
-        switch contentType {
-        case .applicationJson, .textPlain,.imageJpeg:
-            responseSerializer = AFJSONResponseSerializer()
-            if readingOption != nil {
-                (responseSerializer as! AFJSONResponseSerializer).readingOptions = readingOption!
-            }
-        case .textHtml : responseSerializer = AFHTTPResponseSerializer()
-        }
-        responseSerializer.acceptableContentTypes = Set<String>(arrayLiteral: contentType.rawValue)
-        if subContentType != nil {
-            responseSerializer.acceptableContentTypes?.insert(subContentType!.rawValue)
-        } else {
-            responseSerializer.acceptableContentTypes?.insert(LIRequest.ContentType.textPlain.rawValue)
-        }
-        manager.responseSerializer = responseSerializer
-        manager.requestSerializer = requestSerializer
-        
-//        if contentType == LIRequest.ContentType.applicationXwwwFormUrlencoded {
-//            manager.requestSerializer.setQueryStringSerializationWithBlock({ (request, parameters, error) -> String in
-//                do {
-//                    let data = try JSONSerialization.data(withJSONObject: parameters, options: JSONSerialization.WritingOptions.prettyPrinted)
-//                    let string = NSString(data: data, encoding: String.Encoding.utf8.rawValue)
-//                    return String(describing:string)
-//                } catch {
-//                    debugPrint("Errore nella codifica dei parametri")
-//                    return ""
-//                }
-//            })
-//        }
-    
-        NSLog("Nuova chiamata POST : %@", urlString)
-        UIApplication.shared.isNetworkActivityIndicatorVisible = showNetworkActivityIndicator
-        return manager.post(urlString, parameters: params, progress: nil, success: { (dataTask, responseObject) -> Void in
-            UIApplication.shared.isNetworkActivityIndicatorVisible = false
-            if self.contentType == .applicationJson || self.contentType == .textPlain {
-                if let obj = responseObject as? [String:AnyObject] {
-                    if !(obj["success"] as? Bool ?? true) {
-                        debugPrint(obj)
-                        self.callbackFailure(with: obj as AnyObject?, andErrorMessage: obj["message"] as! String)
-                    } else {
-                        NSLog("Risposta success per : %@", urlString)
-                        let currentCallback = self.callbackName
-                        if self.callbackForNextCall {
-                            self.callbackForNextCall = false
-                            self.callbackName = self.previousCallbackName!
-                            self.previousCallbackName = nil
-                        }
-                        
-                        let response = responseObject as! [String:AnyObject]
-                        if currentCallback == "" {
-                            self.callbackSuccess(with: response as AnyObject?)
-                        } else {
-                            self.callbackSuccess(with: response[currentCallback])
-                        }
-                    }
-                } else {
-                    self.callbackSuccess(with: responseObject as AnyObject?)
-                }
-            } else {
-                self.callbackSuccess(with: responseObject as AnyObject?)
-            }
-            if self.contentTypeForNexCall {
-                self.contentTypeForNexCall = false
-                self.contentType = self.previousContentType!
-            }
-            self.callbackIsComplete(with: true)
-        }) { (dataTask, error) -> Void in
-            UIApplication.shared.isNetworkActivityIndicatorVisible = false
-            NSLog("Risposta failure per : %@", urlString)
-            debugPrint(error)
-            self.callbackFailure(with: nil, andErrorMessage: error.localizedDescription)
-            self.callbackIsComplete(with: false)
-        }
+        return self.action(withMethod: .post, toUrl: urlString, withParams: params)
     }
     
     public func post(to urlString : String, withImage image : UIImage, andFileName name : String, andParams params : [String:AnyObject]?) -> URLSessionDataTask?{
