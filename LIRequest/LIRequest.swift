@@ -102,7 +102,7 @@ public class LIRequestBase : Equatable {
                     let string = NSString(data: data, encoding: NSUTF8StringEncoding)
                     return String(string)
                 } catch {
-                    debugPrint("Errore nella codifica dei parametri")
+                    NSLog("Errore nella codifica dei parametri")
                     return ""
                 }
             })
@@ -196,7 +196,7 @@ public class LIRequestBase : Equatable {
                     let string = NSString(data: data, encoding: NSUTF8StringEncoding)
                     return String(string)
                 } catch {
-                    debugPrint("Errore nella codifica dei parametri")
+                    NSLog("Errore nella codifica dei parametri")
                     return ""
                 }
             })
