@@ -30,7 +30,6 @@ public class LIRequest : Equatable {
         case imageJpeg = "image/jpeg"
         //case applicationXwwwFormUrlencoded = "application/x-www-form-urlencoded"
     }
-    }
     
     /**
      It's a Request Unique Identifier
