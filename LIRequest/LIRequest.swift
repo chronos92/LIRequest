@@ -129,7 +129,7 @@ public class LIRequest : Equatable {
     }
     
     //MARK: GET
-    public func get(to urlString : String, withParams params : [String: AnyObject]? = nil) -> URLSessionDataTask? {
+    public func get(to urlString : String, withParams params : [String: Any]? = nil) -> URLSessionDataTask? {
         let requestSerializer = AFHTTPRequestSerializer()
         if requestWithLogin {
             requestSerializer.setAuthorizationHeaderFieldWithUsername(self.loginUsername!, password: self.loginPassword!)
@@ -200,7 +200,7 @@ public class LIRequest : Equatable {
         }
     }
     //MARK: POST
-    public func post(to urlString : String, withParams params : [String:AnyObject]? = nil) -> URLSessionDataTask? {
+    public func post(to urlString : String, withParams params : [String:Any]? = nil) -> URLSessionDataTask? {
         let requestSerializer = AFHTTPRequestSerializer()
         if params != nil {
             let data = try! JSONSerialization.data(withJSONObject: params!, options: JSONSerialization.WritingOptions.prettyPrinted)
@@ -288,19 +288,19 @@ public class LIRequest : Equatable {
         }
     }
     
-    public func post(to urlString : String, withImage image : UIImage, andFileName name : String, andParams params : [String:AnyObject]?) -> URLSessionDataTask?{
+    public func post(to urlString : String, withImage image : UIImage, andFileName name : String, andParams params : [String:Any]?) -> URLSessionDataTask?{
         return post(to:urlString, withImage: image, andFileName: name, andParams: params, andParamsName: nil, uploadProgressBlock: nil)
     }
     
-    public func post(to urlString : String, withImage image : UIImage, andFileName name : String, andParams params : [String:AnyObject]?, uploadProgressBlock block : ((_ percentage:Progress)->Void)?) -> URLSessionDataTask?{
+    public func post(to urlString : String, withImage image : UIImage, andFileName name : String, andParams params : [String:Any]?, uploadProgressBlock block : ((_ percentage:Progress)->Void)?) -> URLSessionDataTask?{
         return post(to:urlString, withImage: image, andFileName: name, andParams: params, andParamsName: nil, uploadProgressBlock: block)
     }
     
-    public func post(to urlString : String, withImage image : UIImage, andFileName fileName : String, andParams params : [String:AnyObject]?, andParamsName paramsName : String?, uploadProgressBlock block : ((_ percentage:Progress)-> Void)?) -> URLSessionDataTask? {
+    public func post(to urlString : String, withImage image : UIImage, andFileName fileName : String, andParams params : [String:Any]?, andParamsName paramsName : String?, uploadProgressBlock block : ((_ percentage:Progress)-> Void)?) -> URLSessionDataTask? {
         return post(to:urlString, withImage: image,andFileName: fileName,andParams: params,andParamsName: paramsName,uploadProgressBlock: block)
     }
     
-    public func post(to urlString : String, withData data : Data, withFileName fileName : String, andParams params : [String:AnyObject]?, andParamsName paramsName : String?, uploadProgressBlock block : ((_ progress : Progress)->Void)?) -> URLSessionDataTask? {
+    public func post(to urlString : String, withData data : Data, withFileName fileName : String, andParams params : [String:Any]?, andParamsName paramsName : String?, uploadProgressBlock block : ((_ progress : Progress)->Void)?) -> URLSessionDataTask? {
         let requestSerializer = AFHTTPRequestSerializer()
         requestSerializer.setValue(LIRequest.ContentType.imageJpeg.rawValue, forHTTPHeaderField: "Content-Type")
         if requestWithLogin {
