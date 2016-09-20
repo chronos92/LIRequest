@@ -203,8 +203,9 @@ public class LIRequest : Equatable {
     public func post(to urlString : String, withParams params : [String:Any]? = nil) -> URLSessionDataTask? {
         let requestSerializer = AFHTTPRequestSerializer()
         if params != nil {
-            let data = try! JSONSerialization.data(withJSONObject: params!, options: JSONSerialization.WritingOptions.prettyPrinted)
-            NSLog("%@",String(data: data, encoding: String.Encoding.utf8)!)
+            if let data = try? JSONSerialization.data(withJSONObject: params!, options: JSONSerialization.WritingOptions.prettyPrinted) {
+                debugPrint(,String(data: data, encoding: String.Encoding.utf8))
+            }
         }
         if requestWithLogin {
             requestSerializer.setAuthorizationHeaderFieldWithUsername(self.loginUsername!, password: self.loginPassword!)
