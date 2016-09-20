@@ -204,7 +204,7 @@ public class LIRequest : Equatable {
         let requestSerializer = AFHTTPRequestSerializer()
         if params != nil {
             if let data = try? JSONSerialization.data(withJSONObject: params!, options: JSONSerialization.WritingOptions.prettyPrinted) {
-                debugPrint(,String(data: data, encoding: String.Encoding.utf8))
+                debugPrint(String(data: data, encoding: String.Encoding.utf8))
             }
         }
         if requestWithLogin {
