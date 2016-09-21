@@ -284,7 +284,7 @@ public class LIRequest : Equatable {
             UIApplication.shared.isNetworkActivityIndicatorVisible = false
             NSLog("Risposta failure per : %@", urlString)
             debugPrint(error)
-            self.callbackFailure(with: nil, andErrorMessage: error.localizedDescription)
+            self.callbackFailure(with: error as AnyObject?, andErrorMessage: error.localizedDescription)
             self.callbackIsComplete(with: false)
         }
     }
