@@ -8,17 +8,21 @@
 
 /* Begin PBXBuildFile section */
 		A17BE4581C99A1FB002A1673 /* LIRequest.h in Headers */ = {isa = PBXBuildFile; fileRef = A17BE4571C99A1FB002A1673 /* LIRequest.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		A17BE4601C99A216002A1673 /* LIRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A17BE45F1C99A216002A1673 /* LIRequest.swift */; };
+		A17BE4601C99A216002A1673 /* OldLIRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A17BE45F1C99A216002A1673 /* OldLIRequest.swift */; };
 		A17BE4621C99A2CB002A1673 /* AFNetworking.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A17BE4611C99A2CB002A1673 /* AFNetworking.framework */; };
-		A17BE46E1C99A491002A1673 /* LIRequest.swift in Headers */ = {isa = PBXBuildFile; fileRef = A17BE45F1C99A216002A1673 /* LIRequest.swift */; settings = {ATTRIBUTES = (Public, ); }; };
+		A17BE46E1C99A491002A1673 /* OldLIRequest.swift in Headers */ = {isa = PBXBuildFile; fileRef = A17BE45F1C99A216002A1673 /* OldLIRequest.swift */; settings = {ATTRIBUTES = (Public, ); }; };
+		A18806051D93304F00B59BB0 /* NewLIRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A18806041D93304F00B59BB0 /* NewLIRequest.swift */; };
+		A18806071D933B6C00B59BB0 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = A18806061D933B6C00B59BB0 /* Localizable.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		A17BE4541C99A1FB002A1673 /* LIRequest.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = LIRequest.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		A17BE4571C99A1FB002A1673 /* LIRequest.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LIRequest.h; sourceTree = "<group>"; };
 		A17BE4591C99A1FB002A1673 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		A17BE45F1C99A216002A1673 /* LIRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LIRequest.swift; sourceTree = "<group>"; };
+		A17BE45F1C99A216002A1673 /* OldLIRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OldLIRequest.swift; sourceTree = "<group>"; };
 		A17BE4611C99A2CB002A1673 /* AFNetworking.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AFNetworking.framework; path = Carthage/Build/iOS/AFNetworking.framework; sourceTree = SOURCE_ROOT; };
+		A18806041D93304F00B59BB0 /* NewLIRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NewLIRequest.swift; sourceTree = "<group>"; };
+		A18806061D933B6C00B59BB0 /* Localizable.strings */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; path = Localizable.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -54,7 +58,9 @@
 			children = (
 				A17BE4611C99A2CB002A1673 /* AFNetworking.framework */,
 				A17BE4571C99A1FB002A1673 /* LIRequest.h */,
-				A17BE45F1C99A216002A1673 /* LIRequest.swift */,
+				A17BE45F1C99A216002A1673 /* OldLIRequest.swift */,
+				A18806061D933B6C00B59BB0 /* Localizable.strings */,
+				A18806041D93304F00B59BB0 /* NewLIRequest.swift */,
 				A17BE4591C99A1FB002A1673 /* Info.plist */,
 			);
 			path = LIRequest;
@@ -68,7 +74,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A17BE4581C99A1FB002A1673 /* LIRequest.h in Headers */,
-				A17BE46E1C99A491002A1673 /* LIRequest.swift in Headers */,
+				A17BE46E1C99A491002A1673 /* OldLIRequest.swift in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -130,6 +136,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A18806071D933B6C00B59BB0 /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -140,7 +147,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A17BE4601C99A216002A1673 /* LIRequest.swift in Sources */,
+				A17BE4601C99A216002A1673 /* OldLIRequest.swift in Sources */,
+				A18806051D93304F00B59BB0 /* NewLIRequest.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

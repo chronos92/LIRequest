@@ -10,11 +10,11 @@ import Foundation
 import AFNetworking
 import UIKit
 
-public func == (l1 : LIRequest, l2 : LIRequest) -> Bool {
+public func == (l1 : OldLIRequest, l2 : OldLIRequest) -> Bool {
     return l1.LIUID == l2.LIUID
 }
 
-public class LIRequest : Equatable {
+public class OldLIRequest : Equatable {
     /**
      The Content-Type to be set in the response
      
@@ -59,7 +59,7 @@ public class LIRequest : Equatable {
     private var success : (_ response:AnyObject?)->Void = {_ in }
     private var additionalSuccess : ((_ response:AnyObject?)->Void)?
     private var failure : (_ errorMessage : String)->Void = {_ in }
-    private var isComplete : ((_ request : LIRequest, _ state : Bool)->Void)?
+    private var isComplete : ((_ request : OldLIRequest, _ state : Bool)->Void)?
     
     //MARK: INIT & SET
     /**
@@ -176,7 +176,8 @@ public class LIRequest : Equatable {
             if let obj = responseObject as? [String:AnyObject] {
                 if !(obj["success"] as? Bool ?? true) {
                     self.callbackFailure(with: obj as AnyObject?, andErrorMessage: obj["message"] as! String)
-                } else {
+                }
+                else {
                     let currentCallback = self.callbackName
                     if self.callbackForNextCall {
                         self.callbackForNextCall = false
@@ -301,7 +302,7 @@ public class LIRequest : Equatable {
     }
     
   
-    public func setIsComplete(with isCompleteHandler : ((_ request:LIRequest, _ state : Bool)->Void)?) {
+    public func setIsComplete(with isCompleteHandler : ((_ request:OldLIRequest, _ state : Bool)->Void)?) {
         isComplete = isCompleteHandler
     }
     
@@ -374,7 +375,7 @@ public class LIRequest : Equatable {
         self.setSuccess(with: successHandler)
     }
     @available(*,deprecated:1.6,message:"use setIsComplete(with:) instead")
-    public func setIsComplete(_ isCompleteHandler : ((_ request:LIRequest, _ state : Bool)->Void)?) {
+    public func setIsComplete(_ isCompleteHandler : ((_ request:OldLIRequest, _ state : Bool)->Void)?) {
         self.setIsComplete(with: isCompleteHandler)
     }
     @available(*,deprecated:1.6,message:"use setLogin(username:andPassword:) insted")
