@@ -411,44 +411,44 @@ public class LIRequest : Equatable {
     }
     
     
-    @available(*,deprecated:1.6,message:"callbackSuccess(with:) instead")
+    @available(*,deprecated: 1.6,renamed: "callbackSuccess(with:)")
     func callbackSuccess(_ response: AnyObject?) {
         self.callbackSuccess(with: response)
         
     }
-    @available(*,deprecated: 1.6,message: "use callbackFailure(with:) instead")
+    @available(*,deprecated: 1.6,renamed: "callbackFailure(with:)")
     func callbackFailure(_ object: AnyObject?,withErrorMessage errorText : String) {
         self.callbackFailure(with: object, andErrorMessage: errorText)
     }
-    @available(*,deprecated: 1.6,message: "use callbackFailure(with:) instead")
+    @available(*,deprecated: 1.6,renamed: "callbackFailure(with:)")
     func callbackFailure(_ errorMessage : String) {
         self.callbackFailure(with:nil,andErrorMessage: errorMessage)
     }
-    @available(*,deprecated: 1.6,message: "use callbackIsComplete(with:) instead")
+    @available(*,deprecated: 1.6,renamed: "callbackIsComplete(with:)")
     func callbackIsComplete(_ state : Bool) {
         self.callbackIsComplete(with: state)
     }
-    @available(*,deprecated: 1.6,message: "use setFailure(withObject:) instead")
+    @available(*,deprecated: 1.6,renamed: "setFailure(withObject:)")
     public func setFailureWithObject(_ failureHandler : ((_ object : AnyObject?,_ errorMessage : String)->Void)?) {
         self.setFailure(withObject: failureHandler)
     }
-    @available(*,deprecated:1.6,message:"use setFailure(with:) instead")
+    @available(*,deprecated:1.6,renamed:"setFailure(with:)")
     public func setFailure(_ failureHandler : @escaping (_ errorMessage : String)->Void) {
         self.setFailure(with: failureHandler)
     }
-    @available(*,deprecated:1.6,message:"use setSuccess(with:) instead")
+    @available(*,deprecated:1.6,renamed:"setSuccess(with:)")
     public func setSuccess(_ successHandler : @escaping (_ responseObject:AnyObject?)->Void) {
         self.setSuccess(with: successHandler)
     }
-    @available(*,deprecated:1.6,message:"use setIsComplete(with:) instead")
+    @available(*,deprecated:1.6,renamed:"setIsComplete(with:)")
     public func setIsComplete(_ isCompleteHandler : ((_ request:LIRequest, _ state : Bool)->Void)?) {
         self.setIsComplete(with: isCompleteHandler)
     }
-    @available(*,deprecated:1.6,message:"use setLogin(username:andPassword:) insted")
+    @available(*,deprecated:1.6,renamed:"setLogin(username:andPassword:)")
     public func setLoginUsername(_ username : String, andLoginPassword password : String) {
         self.setLogin(username: username, andPassword: password)
     }
-    @available(*,deprecated:1.6,message:"use setForNextCall(contentType:subContentType:readingOption:) instead")
+    @available(*,deprecated:1.6,renamed:"setForNextCall(contentType:subContentType:readingOption:)")
     public func setContentTypeForNextCall(_ contentType : LIRequest.ContentType, subContentType sub : LIRequest.ContentType? = nil, readingOption : JSONSerialization.ReadingOptions? = nil) {
         self.setForNextCall(contentType: contentType, subContentType: sub, readingOption: readingOption)
     }
@@ -456,27 +456,27 @@ public class LIRequest : Equatable {
     public func setCallbackNameForNextCall(_ callback : String) {
         self.setForNextCall(callback: callback)
     }
-    @available(*,deprecated:1.6,message: "use get(to:withParams:) instead")
+    @available(*,deprecated:1.6,renamed: "get(to:withParams:)")
     public func get(_ url : String, andParams params : [String: AnyObject]? = nil) -> URLSessionDataTask? {
         return get(to: url, withParams: params)
     }
-    @available(*,deprecated:1.6,message: "use post(to:withParams:) instead")
+    @available(*,deprecated: 1.6,renamed: "post(to:withParams:)")
     public func post(_ url : String, andParams params : [String:AnyObject]? = nil) -> URLSessionDataTask? {
         return post(to: url, withParams: params)
     }
-    @available(*,deprecated:1.6,message: "use post(to:withImage:andFileName:andParams:) instead")
+    @available(*,deprecated: 1.6,renamed: "post(to:withImage:andFileName:andParams:)")
     public func post(_ url : String, andImage image : UIImage, withFileName name : String, andParams params : [String:AnyObject]?) -> URLSessionDataTask? {
         return post(to: url, withImage: image, andFileName: name, andParams: params)
     }
-    @available(*,deprecated:1.6,message: "use post(to:withImage:andFileName:andParams:uploadProgressBlock:) instead")
+    @available(*,deprecated:1.6,renamed:"post(to:withImage:andFileName:andParams:uploadProgressBlock:)")
     public func post(_ url : String, andImage image : UIImage, withFileName name : String, andParams params : [String:AnyObject]?, uploadProgressBlock block : ((_ percentage:Progress)->Void)?) -> URLSessionDataTask? {
         return post(to: url, withImage: image, andFileName: name, andParams: params, uploadProgressBlock: block)
     }
-    @available(*,deprecated:1.6,message: "use post(to:withImage:andFileName:params:andParamsName:uploadProgressBlock:) instead")
+    @available(*,deprecated:1.6,renamed: "post(to:withImage:andFileName:params:andParamsName:uploadProgressBlock:)")
     public func post(_ url : String, andImage image : UIImage, withFileName fileName : String, andParams params : [String:AnyObject]?, andParamsName paramsName : String?, uploadProgressBlock block : ((_ percentage:Progress)-> Void)?) -> URLSessionDataTask? {
         return post(to: url, withImage: image, andFileName: fileName, andParams: params, andParamsName: paramsName, uploadProgressBlock: block)
     }
-    @available(*,deprecated:1.6,message: "use post(to:withData:andFileName:andParams:andParamsName:uploadProgressBlock:) instead")
+    @available(*,deprecated:1.6,renamed: "post(to:withData:andFileName:andParams:andParamsName:uploadProgressBlock:)")
     public func post(_ url : String, andData data : Data, withFileName fileName : String, andParams params : [String:AnyObject]?, andParamsName paramsName : String?, uploadProgressBlock block : ((_ progress : Progress)->Void)?) -> URLSessionDataTask? {
         return post(to: url, withData: data, withFileName: fileName, andParams: params, andParamsName: paramsName, uploadProgressBlock: block)
     }
