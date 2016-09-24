@@ -20,7 +20,9 @@ public typealias ValidationResponseObject = ((_ response:Any?)->Bool)
 public typealias ProgressObject = ((_ progress : Progress)->Void)
 
 
-public class LIRequestInstance : NSObject, URLSessionDelegate, URLSessionTaskDelegate,URLSessionDataDelegate {
+public class LIRequestInstance : NSObject, URLSessionDelegate, URLSessionTaskDelegate,URLSessionDataDelegate,URLSessionDownloadDelegate {
+
+    
     
     var contentType : LIRequest.ContentType = .applicationJson
     var callbackName : String = "data"
@@ -37,7 +39,8 @@ public class LIRequestInstance : NSObject, URLSessionDelegate, URLSessionTaskDel
     }
     var progressObject : ProgressObject?
     
-    private var listOfCall : [(request : LIRequest, task : URLSessionTask)] = []
+    private var listOfCall : [URLSessionTask] = []
+    private var requestForTask : [Int:LIRequest]
     
     func session(delegate : URLSessionDelegate? = nil) -> URLSession {
         if let del = delegate {
@@ -46,8 +49,9 @@ public class LIRequestInstance : NSObject, URLSessionDelegate, URLSessionTaskDel
         return URLSession(configuration: URLSessionConfiguration.default)
     }
     
-    func addNewCall(withRequest request : LIRequest, task : URLSessionTask) {
-        listOfCall.append((request,task))
+    func addNewCall(withTash task : URLSessionTask, andRequest request: LIRequest) {
+        requestForTask[task.taskIdentifier] = request
+        listOfCall.append(task)
     }
     
     static var shared : LIRequestInstance = LIRequestInstance()
@@ -57,8 +61,88 @@ public class LIRequestInstance : NSObject, URLSessionDelegate, URLSessionTaskDel
     }
     
     
+    
+    //per chiamate post e get
+    public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
+        debugprint("Content size - \(downloadTask.response.expectedContentLength)")
+
+        if let request = requestForTask[downloadTask.taskIdentifier] {
+            if let progressObject = request.progressObject {
+                if request.progress == nil {
+                    request.progress = Progress(totalUnitCount: totalBytesExpectedToWrite)
+                }
+                request.progress.completedUnitCount = totalBytesWritten
+                progressObject(request.progress)
+            }
+        }
+    }
+    
+    public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
+        self.hideNetworkActivity()
+        guard let request = requestForTask[downloadTask.taskIdentifier] else { return }
+        guard let data = try? Data(contentsOf: location) else {
+            self.urlSession(session, task: task, didCompleteWithError: LIRequestError(forType: .noDataInResponse))
+            return
+        }
+        if [.applicationJson,.textPlain].contains(request.contentType) {
+            guard let objectJSON = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers) else {
+                self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .incorrectResponseContentType,withUrlString:downloadTask.currentRequest?.url?.absoluteString))
+                return
+            }
+            guard let object = objectJSON as? [AnyHashable:Any] else {
+                self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .incorrectResponseContentType,withUrlString:downloadTask.currentRequest?.url?.absoluteString))
+                return
+            }
+            guard request.validationResponseObject(object) else {
+                self.urlSession(session, task: task, didCompleteWithError: LIRequestError(forType: .errorInResponse, withUrlString: downloadTask.currentRequest?.url?.absoluteString))
+                return
+            }
+            if request.callbackName.isEmpty {
+                request.successObject?(object,object["message"] as? String)
+            } else {
+                request.successObject?(object[request.callbackName],object["message"] as? String)
+            }
+            request.isCompleteObject?(request,true)
+        } else {
+            request.successObject?(data,nil)
+            request.isCompleteObject?(request,true)
+        }
+    }
+    
+    //per chiamate con upload
     public func urlSession(_ session: URLSession, task: URLSessionTask, didSendBodyData bytesSent: Int64, totalBytesSent: Int64, totalBytesExpectedToSend: Int64) {
-        <#code#>
+        if let request = requestForTask[task.taskIdentifier] {
+            if let progressObject = request.progressObject {
+            if request.progress == nil {
+                request.progress = Progress(totalUnitCount: totalBytesExpectedToSend)
+            }
+            request.progress.completedUnitCount = bytesSent
+            progressObject(request.progress)
+            }
+        }
+    }
+    
+    public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        self.hideNetworkActivity()
+        guard let request = requestForTask[task.taskIdentifier] else { return }
+        if let currentError = error {
+            request.failureObject?(nil,currentError)
+            request.isCompleteObject?(request,false)
+        } else {
+            request.successObject?(nil,nil)
+            request.isCompleteObject?(request,true)
+        }
+    }
+    
+    public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse, completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
+        completionHandler(URLSession.ResponseDisposition.allow)
+    }
+    
+    
+    private func hideNetworkActivity() {
+        DispatchQueue.main.async {
+            UIApplication.shared.isNetworkActivityIndicatorVisible = false
+        }
     }
 }
 
@@ -88,12 +172,6 @@ public class LIRequest {
         self.validationResponseObject = LIRequestInstance.shared.validationResponseObject
         self.progressObject = LIRequestInstance.shared.progressObject
     }
-    
-    //failureWithObject
-    //successWithObject
-    //additionalSuccessWithObject
-    //failureWithMessage
-    //isComplete
     
     /**
      The method used in call
@@ -140,48 +218,8 @@ public class LIRequest {
         DispatchQueue.main.async {
             UIApplication.shared.isNetworkActivityIndicatorVisible = self.showNetworkActivityIndicator
         }
-        let task = LIRequestInstance.shared.session().dataTask(with: request) { (requestData, response, error) in
-            DispatchQueue.main.async {
-                UIApplication.shared.isNetworkActivityIndicatorVisible = false
-            }
-            guard error == nil else {
-                self.failureObject?(requestData,error!)
-                self.isCompleteObject?(self,false)
-                return
-            }
-            guard let data = requestData else {
-                self.failureObject?(nil, self.error(forType: .noDataInResponse))
-                self.isCompleteObject?(self,false)
-                return
-            }
-            
-            if self.contentType == .applicationJson || self.contentType == .textPlain {
-                guard let objectJSON = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers) else {
-                    self.failureObject?(data,self.error(forType: .incorrectResponseContentType))
-                    self.isCompleteObject?(self,false)
-                    return
-                }
-                guard let object = objectJSON as? [AnyHashable:Any] else {
-                    self.failureObject?(data,self.error(forType: .incorrectResponseContentType))
-                    self.isCompleteObject?(self,false)
-                    return
-                }
-                guard self.validationResponseObject(object) else {
-                    self.failureObject?(object,self.error(forType: .errorInResponse, withErrorString: object["message"] as? String))
-                    self.isCompleteObject?(self,false)
-                    return
-                }
-                if self.callbackName.isEmpty {
-                    self.successObject?(object,object["message"] as? String)
-                } else {
-                    self.successObject?(object[self.callbackName],object["message"] as? String)
-                }
-            } else {
-                self.successObject?(data,nil)
-                self.isCompleteObject?(self,true)
-            }
-        }
-        LIRequestInstance.shared.addNewCall(withRequest: self, task: task)
+        let task = LIRequestInstance.shared.session().downloadTask(with: request)
+        LIRequestInstance.shared.addNewCall(withTash: task, andRequest: self)
     }
     
     
@@ -207,15 +245,13 @@ public class LIRequest {
         body.append(endBoundaryData)
         request.httpBody = body
         
+        let task = LIRequestInstance.shared.session().uploadTask(with: request, from: imageData)
         
-        let task = LIRequestInstance.shared.session().uploadTask(with: request, from: imageData) { (data, _, error) in
-            
-        }
         
-        LIRequestInstance.shared.addNewCall(withRequest: self, task: task)
+        LIRequestInstance.shared.addNewCall(withTash: task, andRequest: self)
     }
     
-    private func request(forUrl url : URL) -> URLRequest {
+    private func request(forUrl url : URL,withMethod method : Method) -> URLRequest {
         var request = URLRequest(url: url)
         request.httpMethod = method.rawValue
         request.addValue(self.contentType.rawValue, forHTTPHeaderField: "Content-Type")
@@ -238,8 +274,19 @@ public class LIRequest {
     }
 }
 
-//MARK:gestione degli errori NON UTILIZZATA
-extension LIRequest {
+
+class LIRequestError : NSError {
+    /**
+     Definisce il tipo di errore possibile in LIRequest.
+     Per ogni tipo di errore definisce la descrizione dell'errore, il motivo per cui si è verificato l'errore ed un eventuale metodo di risoluzione
+     
+     - invalidUrl
+     - errorInResponse
+     - noDataInResponse
+     - incorrectResponseContentType
+     - incorrectParametersToSend
+     - incorrectImageToSend
+     */
     internal enum ErrorType : Int, LocalizedError {
         case invalidUrl = 400
         case errorInResponse = 406
@@ -288,32 +335,28 @@ extension LIRequest {
         }
     }
     
-    internal func error(forType type : ErrorType,
-                       withUrlString url:String?=nil,
-                       withErrorString string : String? = nil,
-                       withParameters params : [AnyHashable:Any]? = nil) -> Error {
-        
+    init(forType type : ErrorType,
+        withUrlString url:String?=nil,
+        withErrorString string : String? = nil,
+        withParameters params : [AnyHashable:Any]? = nil) {
         let domain = "net.labinfo.LIRequest"
+        let code = type.rawValue
         var userInfo : [AnyHashable:Any] = [NSLocalizedDescriptionKey:type.errorDescription,
                                             NSLocalizedFailureReasonErrorKey:type.failureReason,
                                             NSLocalizedRecoverySuggestionErrorKey:type.recoverySuggestion]
-        switch type {
-        case .invalidUrl:
-            if let u = url {
-                userInfo[NSLocalizedFailureReasonErrorKey] = "\(type.failureReason ?? "") : \(u)"
-            }
-        case .errorInResponse:
-            if let e = string {
-                userInfo[NSLocalizedDescriptionKey] = e
-            }
-        case .incorrectParametersToSend:
-            if let p = params {
-                userInfo[NSLocalizedFailureReasonErrorKey] = "\(type.failureReason ?? "") : \(p)"
-            }
-        default:
-            break
+        if let u = url {
+            userInfo["LIRequestURL"] = u
         }
-        let error = NSError(domain: domain, code: type.rawValue, userInfo: userInfo)
-        return error
+        if let e = string {
+            userInfo[NSLocalizedDescriptionKey] = e
+        }
+        if let p = params {
+            userInfo["LIRequestParametersCausedError"] = "\(type.failureReason ?? "") : \(p)"
+        }
+        super.init(domain: domain, code: code, userInfo: userInfo)
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        super.init(coder: aDecoder)
     }
 }
