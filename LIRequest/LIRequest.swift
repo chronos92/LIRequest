@@ -298,7 +298,7 @@ public class LIRequest : Equatable {
     }
     
     public func post(to urlString : String, withImage image : UIImage, andFileName fileName : String, andParams params : [String:Any]?, andParamsName paramsName : String?, uploadProgressBlock block : ((_ percentage:Progress)-> Void)?) -> URLSessionDataTask? {
-        return post(to:urlString, withImage: image,andFileName: fileName,andParams: params,andParamsName: paramsName,uploadProgressBlock: block)
+        return post(to: urlString, withData: UIImagePNGRepresentation(image)!, withFileName: fileName, andParams: params, andParamsName: paramsName, uploadProgressBlock: block)
     }
     
     public func post(to urlString : String, withData data : Data, withFileName fileName : String, andParams params : [String:Any]?, andParamsName paramsName : String?, uploadProgressBlock block : ((_ progress : Progress)->Void)?) -> URLSessionDataTask? {
