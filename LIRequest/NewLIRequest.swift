@@ -8,45 +8,74 @@
 
 import Foundation
 
-public struct LoginData {
-    let username : String
-    let password : String
-}
-
+/// - parameter request : oggetto che ha effettuato la richiesta
+/// - parameter state: definisce se la richiesta è andata a buon fine oppure è fallita
 public typealias IsCompleteObject = ((_ request:LIRequest,_ state:Bool)->Void)
+
+/// - parameter object : oggetto ricevuto dal server
+/// - parameter error : specifica che tipo di errore c'è stato
 public typealias FailureObject = ((_ object:Any?,_ error : Error)->Void)
+
+/// - parameter object : oggetto ricevuto dal server
+/// - parameter message : messaggio ricevuto dal server
 public typealias SuccessObject = ((_ object:Any?,_ message:String?)->Void)
+
+/// - parameter response : oggetto ricevuto dal server
+/// - returns : true se l'oggetto rispetta la validazione altrimenti false
 public typealias ValidationResponseObject = ((_ response:Any?)->Bool)
+
+/// - parameter progress : oggetto Progress contenente le informazione del progresso
 public typealias ProgressObject = ((_ progress : Progress)->Void)
 
 
-public class LIRequestInstance : NSObject, URLSessionDelegate, URLSessionTaskDelegate,URLSessionDataDelegate,URLSessionDownloadDelegate {
-
+public class LIRequestInstance : NSObject {
     
-    
+    /// Indica il Content-Type di default impostato nell'inizializzazione dell'oggetto LIRequest
     var contentType : LIRequest.ContentType = .applicationJson
+    
+    /// Indica il valore della chiave di default contenente l'oggetto utile nella risposta
     var callbackName : String = "data"
-    var loginData : LoginData? = nil
+    
+    /// Indica i dati necessari per effettuare il login durante le richiesta
+    var loginData : LIRequest.LoginData? = nil
+    
+    /// Indica lo User-Agent di default impostato all'inizializzazione dell'oggetto LIRequest
     var userAgent : String? = nil
-    var showNetworkActivityIndicator : Bool = false
+    
+    /// Indica se dovrè essere visibile l'indicatore di sistema dell'utilizzo della rete
+    var showNetworkActivityIndicator : Bool = true
+    
+    /// Contiente l'oggetto richiamato quando la richiesta è terminata.
+    /// Può essere sovvrascritto per ogni chiamata
     var isCompleteObject : IsCompleteObject?
+    
+    /// Contiene l'oggetto richiamato in caso di errore della richiesta.
+    /// Può essere sovvrascritto per ogni chiamata
     var failureObject : FailureObject?
+    
+    /// Contiene l'oggetto richiamato in caso di successo della richiesta.
+    /// Può essere sovvrascritto per ogni chiamata
     var successObject : SuccessObject?
+    
+    /// Contiene l'oggetto responsabile della validazione della chiamata per il controllo del parametro success nel json ricevuto
+    /// Può essere sovvrascritto per ogni chiamata
     var validationResponseObject : ValidationResponseObject = { response in
         guard let object = response as? [AnyHashable:Any] else { return false }
         guard let success = object["success"] as? Bool else { return false }
         return success
     }
+    
+    /// Contiente l'oggetto richiamato durante il download o l'upload dei dati.
+    /// Può essere sovvrascritto per ogni chiamata
     var progressObject : ProgressObject?
     
-    private var listOfCall : [URLSessionTask] = []
-    private var requestForTask : [Int:LIRequest]
+    internal var listOfCall : [URLSessionTask] = []
+    internal var requestForTask : [Int:LIRequest] = [:]
     
-    func session(delegate : URLSessionDelegate? = nil) -> URLSession {
-        if let del = delegate {
-            return URLSession(configuration: URLSessionConfiguration.default, delegate: del, delegateQueue: nil)
-        }
-        return URLSession(configuration: URLSessionConfiguration.default)
+    private var requestDelegate : LIRequestDelegate = LIRequestDelegate()
+    
+    var session : URLSession {
+        return URLSession(configuration: URLSessionConfiguration.default, delegate: requestDelegate, delegateQueue: nil)
     }
     
     func addNewCall(withTash task : URLSessionTask, andRequest request: LIRequest) {
@@ -60,13 +89,27 @@ public class LIRequestInstance : NSObject, URLSessionDelegate, URLSessionTaskDel
 
     }
     
-    
-    
-    //per chiamate post e get
-    public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
-        debugprint("Content size - \(downloadTask.response.expectedContentLength)")
+    internal func hideNetworkActivity() {
+        DispatchQueue.main.async {
+            UIApplication.shared.isNetworkActivityIndicatorVisible = false
+        }
+    }
+}
 
-        if let request = requestForTask[downloadTask.taskIdentifier] {
+internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskDelegate,URLSessionDataDelegate,URLSessionDownloadDelegate {
+    
+    /// Viene chiamato durante la fase di download dei dati, solitamente, per qualsiasi chiamata POST e GET.
+    /// In questo metodo viene chiamato l'oggetto progress associato alla chiamata, se non presente non viene eseguito nulla.
+    /// Se totalBytesExpectedToWrite è un dato non conosciuto (a causa dell'header nella risposta) non viene eseguito nessun codice.
+    ///
+    /// - parameter session:                   sessione alla quale è associata la chiamata
+    /// - parameter downloadTask:              task che effettua la chiamata ed il download
+    /// - parameter bytesWritten:              numero di bytes ricevuti e scritti nel pacchetto attuale
+    /// - parameter totalBytesWritten:         totale dei bytes ricevuti e scritti
+    /// - parameter totalBytesExpectedToWrite: totale dei bytes che ci si aspetta di ricevere
+    public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
+        guard totalBytesExpectedToWrite != NSURLSessionTransferSizeUnknown else { return }
+        if let request = LIRequestInstance.shared.requestForTask[downloadTask.taskIdentifier] {
             if let progressObject = request.progressObject {
                 if request.progress == nil {
                     request.progress = Progress(totalUnitCount: totalBytesExpectedToWrite)
@@ -77,11 +120,17 @@ public class LIRequestInstance : NSObject, URLSessionDelegate, URLSessionTaskDel
         }
     }
     
+    /// Viene chiamato al termine della fase di download dei dati per qualsiasi chiamata POST e GET
+    /// Vengono effettuati i controlli sui dati ricevuti in base al Content-Type impostato nella chiamata, al blocco per la validazione
+    ///
+    /// - parameter session:      sessione alla quale è associata la chiamata
+    /// - parameter downloadTask: task che ha effettuato la chiamata ed il download
+    /// - parameter location:     url che specifica dove i dati sono stati salvati temporaneamente
     public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
-        self.hideNetworkActivity()
-        guard let request = requestForTask[downloadTask.taskIdentifier] else { return }
+        LIRequestInstance.shared.hideNetworkActivity()
+        guard let request = LIRequestInstance.shared.requestForTask[downloadTask.taskIdentifier] else { return }
         guard let data = try? Data(contentsOf: location) else {
-            self.urlSession(session, task: task, didCompleteWithError: LIRequestError(forType: .noDataInResponse))
+            self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .noDataInResponse))
             return
         }
         if [.applicationJson,.textPlain].contains(request.contentType) {
@@ -94,7 +143,7 @@ public class LIRequestInstance : NSObject, URLSessionDelegate, URLSessionTaskDel
                 return
             }
             guard request.validationResponseObject(object) else {
-                self.urlSession(session, task: task, didCompleteWithError: LIRequestError(forType: .errorInResponse, withUrlString: downloadTask.currentRequest?.url?.absoluteString))
+                self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .errorInResponse, withUrlString: downloadTask.currentRequest?.url?.absoluteString))
                 return
             }
             if request.callbackName.isEmpty {
@@ -109,22 +158,37 @@ public class LIRequestInstance : NSObject, URLSessionDelegate, URLSessionTaskDel
         }
     }
     
-    //per chiamate con upload
+
+    /// Viene chiamato durante la fase di upload dei dati.
+    /// In questo metodo viene chiamato l'oggetto progress associato alla chiamata.
+    ///
+    /// - parameter session:                  sessione alla quale è associata la chiamata
+    /// - parameter task:                     task che effettua la chiamata e l'upload
+    /// - parameter bytesSent:                numero di bytes inviati nel pacchetto attuale
+    /// - parameter totalBytesSent:           numero di bytes inviati nella chiamata
+    /// - parameter totalBytesExpectedToSend: numero di bytes che ci si aspetta di inviare
     public func urlSession(_ session: URLSession, task: URLSessionTask, didSendBodyData bytesSent: Int64, totalBytesSent: Int64, totalBytesExpectedToSend: Int64) {
-        if let request = requestForTask[task.taskIdentifier] {
+        if let request = LIRequestInstance.shared.requestForTask[task.taskIdentifier] {
             if let progressObject = request.progressObject {
-            if request.progress == nil {
-                request.progress = Progress(totalUnitCount: totalBytesExpectedToSend)
-            }
-            request.progress.completedUnitCount = bytesSent
-            progressObject(request.progress)
+                if request.progress == nil {
+                    request.progress = Progress(totalUnitCount: totalBytesExpectedToSend)
+                }
+                request.progress.completedUnitCount = bytesSent
+                progressObject(request.progress)
             }
         }
     }
     
+    /// Viene chiamato al completamento della chiamata.
+    /// Se è presente l'oggetto errore viene chiamato il blocco failure della chiamata
+    /// altrimenti viene chiamato il blocco success senza nessun oggetto specificato
+    ///
+    /// - parameter session: sessione alla quale è associata la chiamata
+    /// - parameter task:    task che effettua la chiamata
+    /// - parameter error:   eventuale errore ricevuto durante la chiamata
     public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-        self.hideNetworkActivity()
-        guard let request = requestForTask[task.taskIdentifier] else { return }
+        LIRequestInstance.shared.hideNetworkActivity()
+        guard let request = LIRequestInstance.shared.requestForTask[task.taskIdentifier] else { return }
         if let currentError = error {
             request.failureObject?(nil,currentError)
             request.isCompleteObject?(request,false)
@@ -138,28 +202,40 @@ public class LIRequestInstance : NSObject, URLSessionDelegate, URLSessionTaskDel
         completionHandler(URLSession.ResponseDisposition.allow)
     }
     
-    
-    private func hideNetworkActivity() {
-        DispatchQueue.main.async {
-            UIApplication.shared.isNetworkActivityIndicatorVisible = false
-        }
-    }
 }
 
 public class LIRequest {
-
+    
+    public struct LoginData {
+        let username : String
+        let password : String
+    }
+    
+    /// Indica il Content-Type di default impostato nell'inizializzazione dell'oggetto LIRequest
     public var contentType : ContentType
+    
+    /// Indica il valore della chiave di default contenente l'oggetto utile nella risposta
     public var callbackName : String
+    
+    /// Indica i dati necessari per effettuare il login durante le richiesta
     public var loginData : LoginData?
+    
+    /// Indica lo User-Agent di default impostato all'inizializzazione dell'oggetto LIRequest
     public var userAgent : String?
+    
+    /// Indica se dovrè essere visibile l'indicatore di sistema dell'utilizzo della rete
     public var showNetworkActivityIndicator : Bool
-    public var isCompleteObject : IsCompleteObject?
-    public var failureObject : FailureObject?
-    public var successObject : SuccessObject?
-    public var progressObject : ProgressObject?
-    public var validationResponseObject : ValidationResponseObject
+    private(set) var isCompleteObject : IsCompleteObject?
+    private(set) var failureObject : FailureObject?
+    private(set) var successObject : SuccessObject?
+    private(set) var progressObject : ProgressObject?
+    private(set) var validationResponseObject : ValidationResponseObject
     fileprivate var progress : Progress!
     
+    /// Crea una nuova istanza della classe LIRequest.
+    /// I dati per l'inizializzazione di questa istanza vengono presi dal singleton LIRequestInstance
+    ///
+    /// - returns: nuova istanza di LIRequest
     init() {
         self.contentType = LIRequestInstance.shared.contentType
         self.callbackName = LIRequestInstance.shared.callbackName
@@ -173,24 +249,21 @@ public class LIRequest {
         self.progressObject = LIRequestInstance.shared.progressObject
     }
     
-    /**
-     The method used in call
-     
-     - get
-     - post
-     */
+    /// Specifica il metodo utilizzato per la chiamata
+    ///
+    /// - post: Il protocollo POST passa le coppie nome-valore nel corpo del messaggio di richiesta HTTP.
+    /// - get:  Il protocollo GET crea una stringa di query delle coppie nome-valore e quindi aggiunge la stringa di query all'URL
     public enum Method : String {
         case post = "POST"
         case get = "GET"
     }
-    /**
-     The Content-Type to be set in the response
-     
-     - text/plain
-     - application/json
-     - text/html
-     - image/jpeg
-     */
+    
+    /// Specifica il Content-Type impostato nella richiesta e l' Accept della risposta
+    ///
+    /// - textPlain:
+    /// - applicationJson:
+    /// - textHtml:
+    /// - imageJpeg:
     public enum ContentType : String {
         case textPlain = "text/plain"
         case applicationJson = "application/json"
@@ -198,19 +271,27 @@ public class LIRequest {
         case imageJpeg = "image/jpeg"
     }
     
+    /// Effettua una chiamata GET all'indirizzo url con i parametri
+    ///
+    /// - parameter url:    indica l'url a cui sarà indirizzata la chiamata
+    /// - parameter params: specifica i parametri da passare al server durante la chiamata
     public func get(toURL url : URL, withParams params : [String:Any]?) {
         self.action(withMethod: .get, toUrl: url, withParams: params)
     }
     
+    /// Effettua una chiamata POST all'indirizzo url con i parametri
+    ///
+    /// - parameter url:    indica l'url a cui sarà indirizzata la chiamata
+    /// - parameter params: specifica i parametri da passare al server durante la chiamata
     public func post(toURL url : URL, withParams params : [String:Any]?) {
         self.action(withMethod: .post, toUrl: url, withParams: params)
     }
     
     internal func action(withMethod method:Method, toUrl url : URL, withParams params : [String:Any]?) {
-        var request = self.request(forUrl: url)
+        var request = self.request(forUrl: url,withMethod: method)
         if let par = params {
             guard let paramsData = try? JSONSerialization.data(withJSONObject: par, options: .init(rawValue: 0)) else {
-                self.failureObject?(nil,self.error(forType: .incorrectParametersToSend,withParameters:par))
+                self.failureObject?(nil,LIRequestError(forType: .incorrectParametersToSend,withParameters:par))
                 return
             }
             request.httpBody = paramsData
@@ -218,16 +299,15 @@ public class LIRequest {
         DispatchQueue.main.async {
             UIApplication.shared.isNetworkActivityIndicatorVisible = self.showNetworkActivityIndicator
         }
-        let task = LIRequestInstance.shared.session().downloadTask(with: request)
+        let task = LIRequestInstance.shared.session.downloadTask(with: request)
         LIRequestInstance.shared.addNewCall(withTash: task, andRequest: self)
     }
     
-    
     public func post(toURL url : URL, withImage image : UIImage, andFileName fileName : String, andParamImageName paramImageName : String?, andParams params : [String:Any]?) {
-        var request = self.request(forUrl: url)
+        var request = self.request(forUrl: url,withMethod: .post)
         request.setValue("multipart/form-data", forHTTPHeaderField: "Content-Type")
         guard let imageData = UIImagePNGRepresentation(image) else {
-            self.failureObject?(nil,self.error(forType: .incorrectImageToSend))
+            self.failureObject?(nil,LIRequestError(forType: .incorrectImageToSend))
             return
         }
         var body = Data()
@@ -245,7 +325,7 @@ public class LIRequest {
         body.append(endBoundaryData)
         request.httpBody = body
         
-        let task = LIRequestInstance.shared.session().uploadTask(with: request, from: imageData)
+        let task = LIRequestInstance.shared.session.uploadTask(with: request, from: imageData)
         
         
         LIRequestInstance.shared.addNewCall(withTash: task, andRequest: self)
@@ -272,8 +352,82 @@ public class LIRequest {
     private func generateBoundaryString() -> String{
         return "Boundary-\(NSUUID().uuidString)"
     }
+    
+    /// Imposta il blocco da eseguire al completamento della chiamata.
+    /// Viene richiamato sia che la chiamata è andata a buon fine che in errore
+    ///
+    /// - parameter object:   blocco di completamento
+    /// - parameter override: se true sovrascrive il blocco, altrimenti esegue prima quello delle configurazioni e poi quello passato
+    public func setIsComplete(withObject object : IsCompleteObject?, overrideDefault override : Bool) {
+        if override {
+            self.isCompleteObject = object
+        } else {
+            self.setIsComplete(withObject: { (request, success) in
+                LIRequestInstance.shared.isCompleteObject?(request,success)
+                object?(request,success)
+                }, overrideDefault: true)
+        }
+    }
+    
+    /// Imposta il blocco da eseguire in caso di errore nella chiamata
+    ///
+    /// - parameter object:   blocco di errore
+    /// - parameter override: se true sovrascrive il blocco, altrimenti esegue prima quello delle configurazioni e poi quello passato
+    public func setFailure(withObject object : FailureObject?, overrideDefault override : Bool) {
+        if override {
+            self.failureObject = object
+        } else {
+            self.setFailure(withObject: { (obj, error) in
+                LIRequestInstance.shared.failureObject?(object,error)
+                object?(obj,error)
+                }, overrideDefault: true)
+        }
+    }
+    
+    /// Imposta il blocco da eseguire in caso di successo nella chiamata
+    ///
+    /// - parameter object:   blocco di successo
+    /// - parameter override: se true sovrascrive il blocco, altrimenti esegue prima quello delle configurazioni e poi quello passato
+    public func setSuccess(withObject object : SuccessObject?, overrideDefault override : Bool) {
+        if override {
+            self.successObject = object
+        } else {
+            self.setSuccess(withObject: { (obj, message) in
+                LIRequestInstance.shared.successObject?(object,message)
+                object?(obj,message)
+                }, overrideDefault: true)
+        }
+    }
+    
+    /// Imposta il blocco da eseguire durante l'avanzamento della chiamata
+    ///
+    /// - parameter object:   blocco d'avanzamento
+    /// - parameter override: se true sovrascrive il blocco, altrimenti esegue prima quello delle configurazioni e poi quello passato
+    public func setProgress(withObject object : ProgressObject?, overrideDefault override : Bool) {
+        if override {
+            self.progressObject = object
+        } else {
+            self.setProgress(withObject: { (progress) in
+                LIRequestInstance.shared.progressObject?(progress)
+                object?(progress)
+                }, overrideDefault: true)
+        }
+    }
+    
+    /// Imposta il blocco da eseguire per la validazione dei dati
+    ///
+    /// - parameter object:   blocco di validazione dati
+    /// - parameter override: se true sovrascrive il blocco, altrimenti esegue prima quello delle configurazioni e poi quello passato
+    public func setValidation(withObject object : @escaping ValidationResponseObject, overrideDefault override : Bool) {
+        if override {
+            self.validationResponseObject = object
+        } else {
+            self.setValidation(withObject: { (response) -> Bool in
+                return LIRequestInstance.shared.validationResponseObject(response) && object(response)
+                }, overrideDefault: true)
+        }
+    }
 }
-
 
 class LIRequestError : NSError {
     /**
@@ -287,6 +441,16 @@ class LIRequestError : NSError {
      - incorrectParametersToSend
      - incorrectImageToSend
      */
+
+    /// Definisce il tipo di errore possibile in LIRequest.
+    /// Per ogni tipo di errore definisce la descrizione dell'errore, il motivo per cui si è verificato ed un eventuale metodo di risoluzione
+    ///
+    /// - invalidUrl
+    /// - errorInRespose
+    /// - noDataInResponse
+    /// - incorrectResponseContentType
+    /// - incorrectParametersToSend
+    /// - incorrectImageToSend
     internal enum ErrorType : Int, LocalizedError {
         case invalidUrl = 400
         case errorInResponse = 406
@@ -323,6 +487,8 @@ class LIRequestError : NSError {
             switch self {
             case .invalidUrl:
                 return NSLocalizedString("ErrorInvalidUrlSuggestion", comment: "")
+            case .incorrectImageToSend:
+                fallthrough
             case .incorrectParametersToSend:
                 fallthrough
             case .noDataInResponse:
