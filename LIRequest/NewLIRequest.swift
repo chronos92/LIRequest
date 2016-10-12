@@ -79,8 +79,23 @@ public class LIRequestInstance : NSObject {
     }
     
     func addNewCall(withTash task : URLSessionTask, andRequest request: LIRequest) {
+        let success = request.successObject
+        request.setSuccess(withObject: { (obj, msg) in
+            DispatchQueue.main.async {
+                success?(obj,msg)
+            }
+            request.successCalled = true
+            }, overrideDefault: true)
+        let failure = request.failureObject
+        request.setFailure(withObject: { (obj, msg) in
+            DispatchQueue.main.async {
+                failure?(obj,msg)
+            }
+            request.failureCalled = true
+            }, overrideDefault: true)
         requestForTask[task.taskIdentifier] = request
         listOfCall.append(task)
+        task.resume()
     }
     
     static var shared : LIRequestInstance = LIRequestInstance()
