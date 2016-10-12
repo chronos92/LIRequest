@@ -158,7 +158,7 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
                 return
             }
             guard request.validationResponseObject(object) else {
-                self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .errorInResponse, withUrlString: downloadTask.currentRequest?.url?.absoluteString))
+                self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .errorInResponse, withUrlString: downloadTask.currentRequest?.url?.absoluteString,withErrorString:object["message"] as? String))
                 return
             }
             if request.callbackName.isEmpty {
