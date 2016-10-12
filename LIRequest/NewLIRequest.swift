@@ -458,6 +458,13 @@ public class LIRequest {
                 }, overrideDefault: true)
         }
     }
+    
+    /// Rimuove il blocco della validazione dei dati per l'istanza corrente
+    public func removeValidation() {
+        self.setValidation(withObject: { (_) -> Bool in
+            return true
+            }, overrideDefault: true)
+    }
 }
 
 class LIRequestError : NSError {
