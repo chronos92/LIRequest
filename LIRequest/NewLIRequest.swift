@@ -229,6 +229,9 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
         completionHandler(URLSession.ResponseDisposition.allow)
     }
     
+    func urlSession(_ session: URLSession, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        completionHandler(.useCredential, URLCredential(trust: challenge.protectionSpace.serverTrust!))
+    }
 }
 
 public class LIRequest {
