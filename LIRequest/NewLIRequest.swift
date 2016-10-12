@@ -162,14 +162,22 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
                 return
             }
             if request.callbackName.isEmpty {
+                if !request.alreadyCalled {
                 request.successObject?(object,object["message"] as? String)
+                    request.isCompleteObject?(request,true)
+                }
             } else {
+                if !request.alreadyCalled {
                 request.successObject?(object[request.callbackName],object["message"] as? String)
-            }
             request.isCompleteObject?(request,true)
+                }
+            }
         } else {
+            if !request.alreadyCalled {
             request.successObject?(data,nil)
             request.isCompleteObject?(request,true)
+        }
+            
         }
     }
     
@@ -205,12 +213,16 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
         LIRequestInstance.shared.hideNetworkActivity()
         guard let request = LIRequestInstance.shared.requestForTask[task.taskIdentifier] else { return }
         if let currentError = error {
+            if !request.alreadyCalled {
             request.failureObject?(nil,currentError)
             request.isCompleteObject?(request,false)
+            }
         } else {
+            if !request.alreadyCalled {
             request.successObject?(nil,nil)
             request.isCompleteObject?(request,true)
         }
+    }
     }
     
     public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse, completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
@@ -246,6 +258,10 @@ public class LIRequest {
     private(set) var progressObject : ProgressObject?
     private(set) var validationResponseObject : ValidationResponseObject
     fileprivate var progress : Progress!
+    
+    internal var failureCalled : Bool = false
+    internal var successCalled : Bool = false
+    internal var alreadyCalled : Bool { return failureCalled || successCalled }
     
     /// Crea una nuova istanza della classe LIRequest.
     /// I dati per l'inizializzazione di questa istanza vengono presi dal singleton LIRequestInstance
