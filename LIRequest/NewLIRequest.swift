@@ -79,17 +79,17 @@ public class LIRequestInstance : NSObject {
     }
     
     func addNewCall(withTash task : URLSessionTask, andRequest request: LIRequest) {
-        let success = request.successObject
+        let success = request.successObjects
         request.setSuccess(withObject: { (obj, msg) in
             DispatchQueue.main.async {
-                success?(obj,msg)
+                success.forEach({ $0(obj,msg) })
             }
             request.successCalled = true
             }, overrideDefault: true)
-        let failure = request.failureObject
+        let failure = request.failureObjects
         request.setFailure(withObject: { (obj, msg) in
             DispatchQueue.main.async {
-                failure?(obj,msg)
+                failure.forEach({ $0(obj,msg) })
             }
             request.failureCalled = true
             }, overrideDefault: true)
@@ -163,20 +163,20 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
             }
             if request.callbackName.isEmpty {
                 if !request.alreadyCalled {
-                request.successObject?(object,object["message"] as? String)
+                    request.successObjects.forEach({ $0(object,object["message"] as? String)})
                     request.isCompleteObject?(request,true)
                 }
             } else {
                 if !request.alreadyCalled {
-                request.successObject?(object[request.callbackName],object["message"] as? String)
-            request.isCompleteObject?(request,true)
+                    request.successObjects.forEach({ $0([request.callbackName],object["message"] as? String)})
+                    request.isCompleteObject?(request,true)
                 }
             }
         } else {
             if !request.alreadyCalled {
-            request.successObject?(data,nil)
-            request.isCompleteObject?(request,true)
-        }
+                request.successObjects.forEach({ $0(data,nil) })
+                request.isCompleteObject?(request,true)
+            }
             
         }
     }
@@ -214,15 +214,15 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
         guard let request = LIRequestInstance.shared.requestForTask[task.taskIdentifier] else { return }
         if let currentError = error {
             if !request.alreadyCalled {
-            request.failureObject?(nil,currentError)
-            request.isCompleteObject?(request,false)
+                request.failureObjects.forEach({$0(nil,currentError)})
+                request.isCompleteObject?(request,false)
             }
         } else {
             if !request.alreadyCalled {
-            request.successObject?(nil,nil)
-            request.isCompleteObject?(request,true)
+                request.successObjects.forEach({$0(nil,nil)})
+                request.isCompleteObject?(request,true)
+            }
         }
-    }
     }
     
     public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse, completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
@@ -255,11 +255,11 @@ public class LIRequest {
     
     /// Indica se dovrè essere visibile l'indicatore di sistema dell'utilizzo della rete
     public var showNetworkActivityIndicator : Bool
-    private(set) var isCompleteObject : IsCompleteObject?
-    private(set) var failureObject : FailureObject?
-    private(set) var successObject : SuccessObject?
-    private(set) var progressObject : ProgressObject?
-    private(set) var validationResponseObject : ValidationResponseObject
+    internal var isCompleteObject : IsCompleteObject?
+    internal var failureObjects : [FailureObject]
+    internal var successObjects : [SuccessObject]
+    internal var progressObject : ProgressObject?
+    internal var validationResponseObject : ValidationResponseObject
     fileprivate var progress : Progress!
     
     internal var failureCalled : Bool = false
@@ -277,8 +277,8 @@ public class LIRequest {
         self.userAgent = LIRequestInstance.shared.userAgent
         self.showNetworkActivityIndicator = LIRequestInstance.shared.showNetworkActivityIndicator
         self.isCompleteObject = LIRequestInstance.shared.isCompleteObject
-        self.failureObject = LIRequestInstance.shared.failureObject
-        self.successObject = LIRequestInstance.shared.successObject
+        self.failureObjects = LIRequestInstance.shared.failureObject != nil ? [LIRequestInstance.shared.failureObject!] : []
+        self.successObjects = LIRequestInstance.shared.successObject != nil ? [LIRequestInstance.shared.successObject!] : []
         self.validationResponseObject = LIRequestInstance.shared.validationResponseObject
         self.progressObject = LIRequestInstance.shared.progressObject
     }
@@ -325,7 +325,7 @@ public class LIRequest {
         var request = self.request(forUrl: url,withMethod: method)
         if let par = params {
             guard let paramsData = try? JSONSerialization.data(withJSONObject: par, options: .init(rawValue: 0)) else {
-                self.failureObject?(nil,LIRequestError(forType: .incorrectParametersToSend,withParameters:par))
+                self.failureObjects.forEach({$0(nil,LIRequestError(forType: .incorrectParametersToSend,withParameters:par))})
                 return
             }
             request.httpBody = paramsData
@@ -341,7 +341,7 @@ public class LIRequest {
         var request = self.request(forUrl: url,withMethod: .post)
         request.setValue("multipart/form-data", forHTTPHeaderField: "Content-Type")
         guard let imageData = UIImagePNGRepresentation(image) else {
-            self.failureObject?(nil,LIRequestError(forType: .incorrectImageToSend))
+            self.failureObjects.forEach({ $0(nil,LIRequestError(forType: .incorrectImageToSend))})
             return
         }
         var body = Data()
@@ -407,41 +407,38 @@ public class LIRequest {
     ///
     /// - parameter object:   blocco di errore
     /// - parameter override: se true sovrascrive il blocco, altrimenti esegue prima quello delle configurazioni e poi quello passato
-    public func setFailure(withObject object : FailureObject?, overrideDefault override : Bool) {
+    public func setFailure(withObject object : @escaping FailureObject, overrideDefault override : Bool) {
         if override {
-            self.failureObject = object
+            self.failureObjects = [object]
         } else {
-            self.setFailure(withObject: { (obj, error) in
-                LIRequestInstance.shared.failureObject?(object,error)
-                object?(obj,error)
-                }, overrideDefault: true)
+            self.addFailure(withObject: object)
         }
+    }
+    
+    /// Aggiunge il blocco in coda ai blocchi già presenti
+    ///
+    /// - parameter object: blocco del failure
+    public func addFailure(withObject object : @escaping FailureObject) {
+        self.failureObjects.append(object)
     }
     
     /// Imposta il blocco da eseguire in caso di successo nella chiamata
     ///
     /// - parameter object:   blocco di successo
     /// - parameter override: se true sovrascrive il blocco, altrimenti esegue prima quello delle configurazioni e poi quello passato
-    public func setSuccess(withObject object : SuccessObject?, overrideDefault override : Bool) {
+    public func setSuccess(withObject object : @escaping SuccessObject, overrideDefault override : Bool) {
         if override {
-            self.successObject = object
+            self.successObjects = [object]
         } else {
-            self.setSuccess(withObject: { (obj, message) in
-                LIRequestInstance.shared.successObject?(object,message)
-                object?(obj,message)
-                }, overrideDefault: true)
+            self.addSuccess(withObject: object)
         }
     }
     
     /// Aggiunge il blocco in coda ai blocchi già presenti
     ///
     /// - parameter object: blocco di success
-    public func addSuccess(withObject object : SuccessObject?) {
-        let success = successObject
-        self.setSuccess(withObject: { (obj, message) in
-            success?(obj,message)
-            object?(obj,message)
-            }, overrideDefault: true)
+    public func addSuccess(withObject object : @escaping SuccessObject) {
+        self.successObjects.append(object)
     }
     
     /// Imposta il blocco da eseguire durante l'avanzamento della chiamata
@@ -482,17 +479,6 @@ public class LIRequest {
 }
 
 class LIRequestError : NSError {
-    /**
-     Definisce il tipo di errore possibile in LIRequest.
-     Per ogni tipo di errore definisce la descrizione dell'errore, il motivo per cui si è verificato l'errore ed un eventuale metodo di risoluzione
-     
-     - invalidUrl
-     - errorInResponse
-     - noDataInResponse
-     - incorrectResponseContentType
-     - incorrectParametersToSend
-     - incorrectImageToSend
-     */
 
     /// Definisce il tipo di errore possibile in LIRequest.
     /// Per ogni tipo di errore definisce la descrizione dell'errore, il motivo per cui si è verificato ed un eventuale metodo di risoluzione
