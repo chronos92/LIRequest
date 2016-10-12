@@ -430,6 +430,17 @@ public class LIRequest {
         }
     }
     
+    /// Aggiunge il blocco in coda ai blocchi già presenti
+    ///
+    /// - parameter object: blocco di success
+    public func addSuccess(withObject object : SuccessObject?) {
+        let success = successObject
+        self.setSuccess(withObject: { (obj, message) in
+            success?(obj,message)
+            object?(obj,message)
+            }, overrideDefault: true)
+    }
+    
     /// Imposta il blocco da eseguire durante l'avanzamento della chiamata
     ///
     /// - parameter object:   blocco d'avanzamento
