@@ -85,7 +85,7 @@ public class LIRequestInstance : NSObject {
         task.resume()
     }
     
-    static var shared : LIRequestInstance = LIRequestInstance()
+    static public var shared : LIRequestInstance = LIRequestInstance()
     
     private override init() {
         
