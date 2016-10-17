@@ -389,7 +389,7 @@ public class LIRequest {
     ///
     /// - parameter object:   blocco di completamento
     /// - parameter override: se true sovrascrive il blocco, altrimenti esegue prima quello delle configurazioni e poi quello passato
-    public func setIsComplete(withObject object : IsCompleteObject?, overrideDefault override : Bool) {
+    public func setIsComplete(withObject object : IsCompleteObject?, overrideDefault override : Bool=false) {
         if override {
             self.isCompleteObject = object
         } else {
@@ -404,7 +404,7 @@ public class LIRequest {
     ///
     /// - parameter object:   blocco di errore
     /// - parameter override: se true sovrascrive il blocco, altrimenti esegue prima quello delle configurazioni e poi quello passato
-    public func setFailure(withObject object : @escaping FailureObject, overrideDefault override : Bool) {
+    public func setFailure(withObject object : @escaping FailureObject, overrideDefault override : Bool=false) {
         if override {
             self.failureObjects = [object]
         } else {
@@ -423,7 +423,7 @@ public class LIRequest {
     ///
     /// - parameter object:   blocco di successo
     /// - parameter override: se true sovrascrive il blocco, altrimenti esegue prima quello delle configurazioni e poi quello passato
-    public func setSuccess(withObject object : @escaping SuccessObject, overrideDefault override : Bool) {
+    public func setSuccess(withObject object : @escaping SuccessObject, overrideDefault override : Bool=false) {
         if override {
             self.successObjects = [object]
         } else {
@@ -442,7 +442,7 @@ public class LIRequest {
     ///
     /// - parameter object:   blocco d'avanzamento
     /// - parameter override: se true sovrascrive il blocco, altrimenti esegue prima quello delle configurazioni e poi quello passato
-    public func setProgress(withObject object : ProgressObject?, overrideDefault override : Bool) {
+    public func setProgress(withObject object : ProgressObject?, overrideDefault override : Bool=false) {
         if override {
             self.progressObject = object
         } else {
@@ -457,7 +457,7 @@ public class LIRequest {
     ///
     /// - parameter object:   blocco di validazione dati
     /// - parameter override: se true sovrascrive il blocco, altrimenti esegue prima quello delle configurazioni e poi quello passato
-    public func setValidation(withObject object : @escaping ValidationResponseObject, overrideDefault override : Bool) {
+    public func setValidation(withObject object : @escaping ValidationResponseObject, overrideDefault override : Bool=false) {
         if override {
             self.validationResponseObject = object
         } else {
