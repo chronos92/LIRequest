@@ -50,7 +50,7 @@ public class LIRequest {
     /// I dati per l'inizializzazione di questa istanza vengono presi dal singleton LIRequestInstance
     ///
     /// - returns: nuova istanza di LIRequest
-    init() {
+    public init() {
         self.contentType = LIRequestInstance.shared.contentType
         self.callbackName = LIRequestInstance.shared.callbackName
         self.loginData = LIRequestInstance.shared.loginData
