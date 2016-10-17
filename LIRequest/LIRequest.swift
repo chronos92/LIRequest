@@ -27,6 +27,7 @@ public typealias ValidationResponseObject = ((_ response:Any?)->Bool)
 /// - parameter progress : oggetto Progress contenente le informazione del progresso
 public typealias ProgressObject = ((_ progress : Progress)->Void)
 
+public typealias ObjectConversion = ((_ parameters : [String:Any]) throws ->String)
 
 public class LIRequestInstance : NSObject {
     
@@ -68,6 +69,13 @@ public class LIRequestInstance : NSObject {
     /// Contiente l'oggetto richiamato durante il download o l'upload dei dati.
     /// Può essere sovvrascritto per ogni chiamata
     var progressObject : ProgressObject?
+    
+    /// Contiene l'oggetto responsabile per la conversione dei parametri durante la fase di preparazione della chiamata
+    var objectConversion : ObjectConversion?
+    
+    /// Indica quale tipo di conversione verrà fatta per la creazione del corpo della chiamata
+    /// Default : utf8
+    var encoding : String.Encoding = .utf8
     
     internal var listOfCall : [URLSessionTask] = []
     internal var requestForTask : [Int:LIRequest] = [:]
@@ -148,6 +156,8 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
             self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .noDataInResponse))
             return
         }
+        let string = String(data: data, encoding: .utf8)
+        debugPrint(string)
         if [.applicationJson,.textPlain].contains(request.contentType) {
             guard let objectJSON = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers) else {
                 self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .incorrectResponseContentType,withUrlString:downloadTask.currentRequest?.url?.absoluteString))
@@ -266,6 +276,12 @@ public class LIRequest {
     internal var successCalled : Bool = false
     internal var alreadyCalled : Bool { return failureCalled || successCalled }
     
+    /// Indica quale tipo di codifica dovrà essere utilizzata durante la fase di invio dei parametri nel corpo della richiesta.
+    var encoding : String.Encoding
+    
+    /// Contiene l'oggetto responsabile per la conversione dei parametri durante la fase di preparazione della chiamata.
+    var objectConversion : ObjectConversion?
+    
     /// Crea una nuova istanza della classe LIRequest.
     /// I dati per l'inizializzazione di questa istanza vengono presi dal singleton LIRequestInstance
     ///
@@ -281,6 +297,8 @@ public class LIRequest {
         self.successObjects = LIRequestInstance.shared.successObject != nil ? [LIRequestInstance.shared.successObject!] : []
         self.validationResponseObject = LIRequestInstance.shared.validationResponseObject
         self.progressObject = LIRequestInstance.shared.progressObject
+        self.objectConversion = LIRequestInstance.shared.objectConversion
+        self.encoding = LIRequestInstance.shared.encoding
     }
     
     /// Specifica il metodo utilizzato per la chiamata
@@ -303,6 +321,7 @@ public class LIRequest {
         case applicationJson = "application/json"
         case textHtml = "text/html"
         case imageJpeg = "image/jpeg"
+        case applicationFormUrlencoded = "application/x-www-form-urlencoded"
     }
     
     /// Effettua una chiamata GET all'indirizzo url con i parametri
@@ -324,20 +343,234 @@ public class LIRequest {
     internal func action(withMethod method:Method, toUrl url : URL, withParams params : [String:Any]?) {
         var request = self.request(forUrl: url,withMethod: method)
         if let par = params {
-            guard let paramsData = try? JSONSerialization.data(withJSONObject: par, options: .init(rawValue: 0)) else {
-                self.failureObjects.forEach({$0(nil,LIRequestError(forType: .incorrectParametersToSend,withParameters:par))})
-                return
+            var query : String
+            if let obj = self.objectConversion {
+                do {
+                    query = try obj(par)
+                } catch {
+                    query = ""
+                    let error = LIRequestError(forType: .incorrectParametersToSend,withParameters:par)
+                    self.failureObjects.forEach({$0(nil,error)})
+                }
+            } else {
+                query = queryString(fromParameter: par)
             }
-            request.httpBody = paramsData
+            request.httpBody = query.data(using: self.encoding)
+        }
+        if let body = request.httpBody {
+            let string = String(data: body, encoding: self.encoding)
+            debugPrint(string)
         }
         DispatchQueue.main.async {
             UIApplication.shared.isNetworkActivityIndicatorVisible = self.showNetworkActivityIndicator
         }
         let task = LIRequestInstance.shared.session.downloadTask(with: request)
         LIRequestInstance.shared.addNewCall(withTash: task, andRequest: self)
+        
+        //        - (NSURLRequest *)requestBySerializingRequest:(NSURLRequest *)request
+        //        withParameters:(id)parameters
+        //        error:(NSError *__autoreleasing *)error
+        //        {
+        //            NSParameterAssert(request);
+        //
+        //            NSMutableURLRequest *mutableRequest = [request mutableCopy];
+        //
+        //            [self.HTTPRequestHeaders enumerateKeysAndObjectsUsingBlock:^(id field, id value, BOOL * __unused stop) {
+        //                if (![request valueForHTTPHeaderField:field]) {
+        //                [mutableRequest setValue:value forHTTPHeaderField:field];
+        //                }
+        //                }];
+        //
+        //            NSString *query = nil;
+        //            if (parameters) {
+        //                if (self.queryStringSerialization) {
+        //                    NSError *serializationError;
+        //                    query = self.queryStringSerialization(request, parameters, &serializationError);
+        //
+        //                    if (serializationError) {
+        //                        if (error) {
+        //                            *error = serializationError;
+        //                        }
+        //
+        //                        return nil;
+        //                    }
+        //                } else {
+        //                    switch (self.queryStringSerializationStyle) {
+        //                    case AFHTTPRequestQueryStringDefaultStyle:
+        //                        query = AFQueryStringFromParameters(parameters);
+        //                        break;
+        //                    }
+        //                }
+        //            }
+        //
+        //            if ([self.HTTPMethodsEncodingParametersInURI containsObject:[[request HTTPMethod] uppercaseString]]) {
+        //                if (query && query.length > 0) {
+        //                    mutableRequest.URL = [NSURL URLWithString:[[mutableRequest.URL absoluteString] stringByAppendingFormat:mutableRequest.URL.query ? @"&%@" : @"?%@", query]];
+        //                }
+        //            } else {
+        //                // #2864: an empty string is a valid x-www-form-urlencoded payload
+        //                if (!query) {
+        //                    query = @"";
+        //                }
+        //                if (![mutableRequest valueForHTTPHeaderField:@"Content-Type"]) {
+        //                    [mutableRequest setValue:@"application/x-www-form-urlencoded" forHTTPHeaderField:@"Content-Type"];
+        //                }
+        //                [mutableRequest setHTTPBody:[query dataUsingEncoding:self.stringEncoding]];
+        //            }
+        //            
+        //            return mutableRequest;
+        //        }
+        
     }
     
+    private func queryString(fromParameter params : [String:Any]) -> String {
+        var array : [String] = []
+        for (key,value) in params {
+            array.append(String(format:"%@=%@",key,description(value)))
+        }
+        
+        return array.joined(separator: "&")
+    }
+    
+    private func description(_ item : Any) -> String {
+        if let val = item as? String {
+            return val.description
+        } else
+        if let val = item as? Int {
+            return val.description
+        } else
+        if let val = item as? Double {
+              return val.description
+        } else
+        if let val = item as? Float {
+              return val.description
+        } else
+        if let val = item as? UInt {
+              return val.description
+        } else {
+            assertionFailure("No valid type in description")
+            return ""
+        }
+    
+    //        NSString * AFQueryStringFromParameters(NSDictionary *parameters) {
+    //            NSMutableArray *mutablePairs = [NSMutableArray array];
+    //            for (AFQueryStringPair *pair in AFQueryStringPairsFromDictionary(parameters)) {
+    //                [mutablePairs addObject:[pair URLEncodedStringValue]];
+    //            }
+    //
+    //            return [mutablePairs componentsJoinedByString:@"&"];
+    //        }
+    }
+    
+//    private func encode(key : String, andValue value : String?) -> String {
+//        if value == nil {
+//            return percentEscaped(fromString: key)
+//        } else {
+//            return String(format: "%@=%@", percentEscaped(fromString: key),percentEscaped(fromString: value!))
+//        }
+//    }
+    //        - (NSString *)URLEncodedStringValue {
+    //            if (!self.value || [self.value isEqual:[NSNull null]]) {
+    //                return AFPercentEscapedStringFromString([self.field description]);
+    //            } else {
+    //                return [NSString stringWithFormat:@"%@=%@", AFPercentEscapedStringFromString([self.field description]), AFPercentEscapedStringFromString([self.value description])];
+    //            }
+    //        }
+
+//    private func percentEscaped(fromString string : String) -> String {
+//        let generalDelimiters = ":#[]@"
+//        let subDelimiters = "!$&'()*+,;="
+//        var charset = CharacterSet.urlQueryAllowed
+//        charset.remove(charactersIn: generalDelimiters)
+//        charset.remove(charactersIn: subDelimiters)
+//        
+//        let batchSize : Int = 50
+//        var index : Int = 0
+//        var escaped = ""
+//        while index<string.characters.count {
+//            let length = min(string.characters.count - index, batchSize)
+//            let l = index as! String.Index
+//            let u = length as! String.Index
+//            var range = Range<String.Index>(uncheckedBounds: (lower: l, upper: u))
+//            range = string.rangeOfComposedCharacterSequences(for: range)
+//            let substring = string.substring(with: range)
+//            let encoded = substring.addingPercentEncoding(withAllowedCharacters: charset)
+//            escaped.append(encoded!)
+//            index += range.upperBound
+//        }
+//        return escaped
+//    }
+//    NSString * AFPercentEscapedStringFromString(NSString *string) {
+//    static NSString * const kAFCharactersGeneralDelimitersToEncode = @":#[]@"; // does not include "?" or "/" due to RFC 3986 - Section 3.4
+//    static NSString * const kAFCharactersSubDelimitersToEncode = @"!$&'()*+,;=";
+//    
+//    NSMutableCharacterSet * allowedCharacterSet = [[NSCharacterSet URLQueryAllowedCharacterSet] mutableCopy];
+//    [allowedCharacterSet removeCharactersInString:[kAFCharactersGeneralDelimitersToEncode stringByAppendingString:kAFCharactersSubDelimitersToEncode]];
+//    
+//    // FIXME: https://github.com/AFNetworking/AFNetworking/pull/3028
+//    // return [string stringByAddingPercentEncodingWithAllowedCharacters:allowedCharacterSet];
+//    
+//    static NSUInteger const batchSize = 50;
+//    
+//    NSUInteger index = 0;
+//    NSMutableString *escaped = @"".mutableCopy;
+//    
+//    while (index < string.length) {
+//    #pragma GCC diagnostic push
+//    #pragma GCC diagnostic ignored "-Wgnu"
+//    NSUInteger length = MIN(string.length - index, batchSize);
+//    #pragma GCC diagnostic pop
+//    NSRange range = NSMakeRange(index, length);
+//    
+//    // To avoid breaking up character sequences such as 👴🏻👮🏽
+//    range = [string rangeOfComposedCharacterSequencesForRange:range];
+//    
+//    NSString *substring = [string substringWithRange:range];
+//    NSString *encoded = [substring stringByAddingPercentEncodingWithAllowedCharacters:allowedCharacterSet];
+//    [escaped appendString:encoded];
+//    
+//    index += range.length;
+//    }
+//    
+//    return escaped;
+//    }
+    
     public func post(toURL url : URL, withImage image : UIImage, andFileName fileName : String, andParamImageName paramImageName : String?, andParams params : [String:Any]?) {
+        
+
+//        NSArray * AFQueryStringPairsFromKeyAndValue(NSString *key, id value) {
+//            NSMutableArray *mutableQueryStringComponents = [NSMutableArray array];
+//            
+//            NSSortDescriptor *sortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"description" ascending:YES selector:@selector(compare:)];
+//            
+//            if ([value isKindOfClass:[NSDictionary class]]) {
+//                NSDictionary *dictionary = value;
+//                // Sort dictionary keys to ensure consistent ordering in query string, which is important when deserializing potentially ambiguous sequences, such as an array of dictionaries
+//                for (id nestedKey in [dictionary.allKeys sortedArrayUsingDescriptors:@[ sortDescriptor ]]) {
+//                    id nestedValue = dictionary[nestedKey];
+//                    if (nestedValue) {
+//                        [mutableQueryStringComponents addObjectsFromArray:AFQueryStringPairsFromKeyAndValue((key ? [NSString stringWithFormat:@"%@[%@]", key, nestedKey] : nestedKey), nestedValue)];
+//                    }
+//                }
+//            } else if ([value isKindOfClass:[NSArray class]]) {
+//                NSArray *array = value;
+//                for (id nestedValue in array) {
+//                    [mutableQueryStringComponents addObjectsFromArray:AFQueryStringPairsFromKeyAndValue([NSString stringWithFormat:@"%@[]", key], nestedValue)];
+//                }
+//            } else if ([value isKindOfClass:[NSSet class]]) {
+//                NSSet *set = value;
+//                for (id obj in [set sortedArrayUsingDescriptors:@[ sortDescriptor ]]) {
+//                    [mutableQueryStringComponents addObjectsFromArray:AFQueryStringPairsFromKeyAndValue(key, obj)];
+//                }
+//            } else {
+//                [mutableQueryStringComponents addObject:[[AFQueryStringPair alloc] initWithField:key value:value]];
+//            }
+//            
+//            return mutableQueryStringComponents;
+//        }
+
+        
+        
         var request = self.request(forUrl: url,withMethod: .post)
         request.setValue("multipart/form-data", forHTTPHeaderField: "Content-Type")
         guard let imageData = UIImagePNGRepresentation(image) else {
@@ -346,16 +579,16 @@ public class LIRequest {
         }
         var body = Data()
         let boundary = generateBoundaryString()
-        let boundaryData = NSString(string:"--\(boundary)\r\n").data(using: String.Encoding.utf8.rawValue)
+        let boundaryData = NSString(string:"--\(boundary)\r\n").data(using: self.encoding.rawValue)
         body.append(boundaryData!)
-        let contentDispositionData = NSString(string:"Content-Disposition:form-data;name\"test\"\r\n\r\n").data(using: String.Encoding.utf8.rawValue)!
+        let contentDispositionData = NSString(string:"Content-Disposition:form-data;name\"test\"\r\n\r\n").data(using: self.encoding.rawValue)!
         body.append(contentDispositionData)
-        let contentTypeData = NSString(string: "Content-Type:\(ContentType.imageJpeg.rawValue)\r\n\r\n").data(using: String.Encoding.utf8.rawValue)!
+        let contentTypeData = NSString(string: "Content-Type:\(ContentType.imageJpeg.rawValue)\r\n\r\n").data(using: self.encoding.rawValue)!
         body.append(contentTypeData)
         body.append(imageData)
-        let endData = NSString(string: "\r\n").data(using: String.Encoding.utf8.rawValue)!
+        let endData = NSString(string: "\r\n").data(using: self.encoding.rawValue)!
         body.append(endData)
-        let endBoundaryData = NSString(string:"--\(boundary)--\r\n").data(using: String.Encoding.utf8.rawValue)!
+        let endBoundaryData = NSString(string:"--\(boundary)--\r\n").data(using: self.encoding.rawValue)!
         body.append(endBoundaryData)
         request.httpBody = body
         
@@ -375,7 +608,7 @@ public class LIRequest {
         }
         if let ld = loginData {
             let userString = NSString(format:"%@:%@",ld.username,ld.password)
-            let authData = userString.data(using: String.Encoding.utf8.rawValue)
+            let authData = userString.data(using: self.encoding.rawValue)
             let base64EncodedCredential = authData!.base64EncodedData()
             let authString = "Basic \(base64EncodedCredential)"
             request.addValue(authString, forHTTPHeaderField: "Authorization")
