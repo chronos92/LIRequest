@@ -454,6 +454,18 @@ public class LIRequest {
             return true
             }, overrideDefault: true)
     }
+    
+    internal func callSuccess(withObject object : Any, andMessage message : String?) {
+        self.successObjects.forEach { (success) in
+            success(object,message)
+        }
+    }
+    
+    internal func callFailure(withObject object:Any?,andError error : Error?) {
+        self.failureObjects.forEach { (failure) in
+            failure(object,error)
+        }
+    }
 }
 
 func LILocalizedString(_ key : String,comment : String) -> String {

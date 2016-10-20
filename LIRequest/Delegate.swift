@@ -65,12 +65,12 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
             }
             if request.callbackName.isEmpty {
                 if !request.alreadyCalled {
-                    request.successObjects.forEach({ $0(object,object["message"] as? String)})
+                    request.callSuccess(withObject: object, andMessage: object["message"] as? String)
                     request.isCompleteObject?(request,true)
                 }
             } else {
                 if !request.alreadyCalled {
-                    request.successObjects.forEach({ $0([request.callbackName],object["message"] as? String)})
+                    request.callSuccess(withObject: object[request.callbackName], andMessage: object["message"] as? String)
                     request.isCompleteObject?(request,true)
                 }
             }
@@ -83,7 +83,7 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
         case LIRequest.Accept.textCsv:
             if let responseString = String(data: data, encoding: request.encoding) {
                 if !request.alreadyCalled {
-                    request.successObjects.forEach({ $0(responseString,nil) })
+                    request.callSuccess(withObject: responseString, andMessage: nil)
                     request.isCompleteObject?(request,true)
                 }
             } else {
@@ -93,7 +93,7 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
             }
         default:
             if !request.alreadyCalled {
-                request.successObjects.forEach({ $0(data,nil) })
+                request.callSuccess(withObject: data, andMessage: nil)
                 request.isCompleteObject?(request,true)
             }
         }
@@ -132,12 +132,12 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
         guard let request = LIRequestInstance.shared.requestForTask[task.taskIdentifier] else { return }
         if let currentError = error {
             if !request.alreadyCalled {
-                request.failureObjects.forEach({$0(nil,currentError)})
+                request.callFailure(withObject: nil, andError: currentError)
                 request.isCompleteObject?(request,false)
             }
         } else {
             if !request.alreadyCalled {
-                request.successObjects.forEach({$0(nil,nil)})
+                request.callSuccess(withObject: nil, andMessage: nil)
                 request.isCompleteObject?(request,true)
             }
         }
