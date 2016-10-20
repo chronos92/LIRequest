@@ -12,7 +12,8 @@
 		A11776931DB5069200E1C682 /* Instance.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11776921DB5069200E1C682 /* Instance.swift */; };
 		A17BE4581C99A1FB002A1673 /* LIRequest.h in Headers */ = {isa = PBXBuildFile; fileRef = A17BE4571C99A1FB002A1673 /* LIRequest.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		A18806051D93304F00B59BB0 /* LIRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A18806041D93304F00B59BB0 /* LIRequest.swift */; };
-		A18806071D933B6C00B59BB0 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = A18806061D933B6C00B59BB0 /* Localizable.strings */; };
+		A1B8DD961DB8D906002B6FB7 /* LIRequestLocalizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = A1B8DD951DB8D906002B6FB7 /* LIRequestLocalizable.strings */; };
+		A1B8DD981DB8DD40002B6FB7 /* Structures.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B8DD971DB8DD40002B6FB7 /* Structures.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,7 +24,8 @@
 		A17BE4571C99A1FB002A1673 /* LIRequest.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LIRequest.h; sourceTree = "<group>"; };
 		A17BE4591C99A1FB002A1673 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A18806041D93304F00B59BB0 /* LIRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LIRequest.swift; sourceTree = "<group>"; };
-		A18806061D933B6C00B59BB0 /* Localizable.strings */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; path = Localizable.strings; sourceTree = "<group>"; };
+		A1B8DD951DB8D906002B6FB7 /* LIRequestLocalizable.strings */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; path = LIRequestLocalizable.strings; sourceTree = "<group>"; };
+		A1B8DD971DB8DD40002B6FB7 /* Structures.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Structures.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -57,11 +59,12 @@
 			isa = PBXGroup;
 			children = (
 				A17BE4571C99A1FB002A1673 /* LIRequest.h */,
-				A18806061D933B6C00B59BB0 /* Localizable.strings */,
 				A18806041D93304F00B59BB0 /* LIRequest.swift */,
+				A1B8DD951DB8D906002B6FB7 /* LIRequestLocalizable.strings */,
 				A11776921DB5069200E1C682 /* Instance.swift */,
 				A117768E1DB5062000E1C682 /* Delegate.swift */,
 				A11776901DB5066700E1C682 /* Objects.swift */,
+				A1B8DD971DB8DD40002B6FB7 /* Structures.swift */,
 				A17BE4591C99A1FB002A1673 /* Info.plist */,
 			);
 			path = LIRequest;
@@ -136,7 +139,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A18806071D933B6C00B59BB0 /* Localizable.strings in Resources */,
+				A1B8DD961DB8D906002B6FB7 /* LIRequestLocalizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -147,6 +150,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A1B8DD981DB8DD40002B6FB7 /* Structures.swift in Sources */,
 				A11776911DB5066700E1C682 /* Objects.swift in Sources */,
 				A18806051D93304F00B59BB0 /* LIRequest.swift in Sources */,
 				A11776931DB5069200E1C682 /* Instance.swift in Sources */,

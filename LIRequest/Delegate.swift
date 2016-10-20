@@ -45,19 +45,22 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
             self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .noDataInResponse))
             return
         }
-        let string = String(data: data, encoding: .utf8)
-        debugPrint(string)
-        if [.applicationJson,.textPlain,.applicationFormUrlencoded].contains(request.contentType) {
+        switch request.accept {
+        case LIRequest.Accept.applicationJson:
             guard let objectJSON = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers) else {
-                self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .incorrectResponseContentType,withUrlString:downloadTask.currentRequest?.url?.absoluteString))
+                self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .incorrectResponseContentType,
+                                                                                                  withUrlString:downloadTask.currentRequest?.url?.absoluteString))
                 return
             }
             guard let object = objectJSON as? [AnyHashable:Any] else {
-                self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .incorrectResponseContentType,withUrlString:downloadTask.currentRequest?.url?.absoluteString))
+                self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .incorrectResponseContentType,
+                                                                                                  withUrlString:downloadTask.currentRequest?.url?.absoluteString))
                 return
             }
             guard request.validationResponseObject(object) else {
-                self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .errorInResponse, withUrlString: downloadTask.currentRequest?.url?.absoluteString,withErrorString:object["message"] as? String))
+                self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .errorInResponse,
+                                                                                                  withUrlString: downloadTask.currentRequest?.url?.absoluteString,
+                                                                                                  withErrorString:object["message"] as? String))
                 return
             }
             if request.callbackName.isEmpty {
@@ -71,12 +74,28 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
                     request.isCompleteObject?(request,true)
                 }
             }
-        } else {
+        case LIRequest.Accept.textHtml:
+            fallthrough
+        case LIRequest.Accept.textPlain:
+            fallthrough
+        case LIRequest.Accept.textCss:
+            fallthrough
+        case LIRequest.Accept.textCsv:
+            if let responseString = String(data: data, encoding: request.encoding) {
+                if !request.alreadyCalled {
+                    request.successObjects.forEach({ $0(responseString,nil) })
+                    request.isCompleteObject?(request,true)
+                }
+            } else {
+                self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .incorrectResponseContentType,
+                                                                                                  withUrlString: downloadTask.currentRequest?.url?.absoluteString))
+                return
+            }
+        default:
             if !request.alreadyCalled {
                 request.successObjects.forEach({ $0(data,nil) })
                 request.isCompleteObject?(request,true)
             }
-            
         }
     }
     

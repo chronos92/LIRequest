@@ -10,6 +10,9 @@ import Foundation
 
 public class LIRequestInstance : NSObject {
     
+    /// Indica l' Accept di default impostato nell'inizializzazione dell'oggetto LIRequest
+    public var accept : LIRequest.Accept = LIRequest.Accept.applicationJson
+    
     /// Indica il Content-Type di default impostato nell'inizializzazione dell'oggetto LIRequest
     public var contentType : LIRequest.ContentType = .applicationJson
     

@@ -15,6 +15,9 @@ public class LIRequest {
         let password : String
     }
     
+    /// Indica la chiave Accept nell'header della richiesta
+    public var accept : Accept
+    
     /// Indica il Content-Type di default impostato nell'inizializzazione dell'oggetto LIRequest
     public var contentType : ContentType
     
@@ -51,6 +54,7 @@ public class LIRequest {
     ///
     /// - returns: nuova istanza di LIRequest
     public init() {
+        self.accept = LIRequestInstance.shared.accept
         self.contentType = LIRequestInstance.shared.contentType
         self.callbackName = LIRequestInstance.shared.callbackName
         self.loginData = LIRequestInstance.shared.loginData
@@ -63,29 +67,6 @@ public class LIRequest {
         self.progressObject = LIRequestInstance.shared.progressObject
         self.objectConversion = LIRequestInstance.shared.objectConversion
         self.encoding = LIRequestInstance.shared.encoding
-    }
-    
-    /// Specifica il metodo utilizzato per la chiamata
-    ///
-    /// - post: Il protocollo POST passa le coppie nome-valore nel corpo del messaggio di richiesta HTTP.
-    /// - get:  Il protocollo GET crea una stringa di query delle coppie nome-valore e quindi aggiunge la stringa di query all'URL
-    public enum Method : String {
-        case post = "POST"
-        case get = "GET"
-    }
-    
-    /// Specifica il Content-Type impostato nella richiesta e l' Accept della risposta
-    ///
-    /// - textPlain:
-    /// - applicationJson:
-    /// - textHtml:
-    /// - imageJpeg:
-    public enum ContentType : String {
-        case textPlain = "text/plain"
-        case applicationJson = "application/json"
-        case textHtml = "text/html"
-        case imageJpeg = "image/jpeg"
-        case applicationFormUrlencoded = "application/x-www-form-urlencoded"
     }
     
     /// Effettua una chiamata GET all'indirizzo url con i parametri
@@ -347,7 +328,7 @@ public class LIRequest {
         body.append(boundaryData!)
         let contentDispositionData = NSString(string:"Content-Disposition:form-data;name\"test\"\r\n\r\n").data(using: self.encoding.rawValue)!
         body.append(contentDispositionData)
-        let contentTypeData = NSString(string: "Content-Type:\(ContentType.imageJpeg.rawValue)\r\n\r\n").data(using: self.encoding.rawValue)!
+        let contentTypeData = NSString(string: "Content-Type:\(ContentType.imageJpeg.key)\r\n\r\n").data(using: self.encoding.rawValue)!
         body.append(contentTypeData)
         body.append(imageData)
         let endData = NSString(string: "\r\n").data(using: self.encoding.rawValue)!
@@ -365,8 +346,8 @@ public class LIRequest {
     private func request(forUrl url : URL,withMethod method : Method) -> URLRequest {
         var request = URLRequest(url: url)
         request.httpMethod = method.rawValue
-        request.addValue(self.contentType.rawValue, forHTTPHeaderField: "Content-Type")
-        request.addValue(self.contentType.rawValue, forHTTPHeaderField: "Accept")
+        request.addValue(self.contentType.key, forHTTPHeaderField: "Content-Type")
+        request.addValue(self.contentType.key, forHTTPHeaderField: "Accept")
         if let ua = userAgent {
             request.addValue(ua, forHTTPHeaderField: "User-Agent")
         }
