@@ -1,0 +1,18 @@
+/*
+  Localizable.strings
+  LIRequest
+
+  Created by Boris Falcinelli on 22/09/16.
+  Copyright © 2016 Boris Falcinelli. All rights reserved.
+*/
+
+
+ErrorCall="Errore nella chiamata";
+
+ErrorInvalidUrl="Url non valido";
+ErrorInvalidUrlSuggestion="Controlla la validità dell'url";
+
+ErrorInResponse="Errore nella risposta";
+ErrorIncorrectContentType="Errore nel Content-Type della risposta";
+ErrorIncorrectParametersToSend="Errore nei parametri da inviare";
+ErrorIncorrectImageToSend="Errore nell'immagine da inviare";

@@ -1,491 +1,567 @@
 //
-//  LIRequestSwift.swift
-//  LIRequestSwift
+//  NewLIRequest.swift
+//  LIRequest
 //
-//  Created by Boris Falcinelli on 03/02/16.
+//  Created by Boris Falcinelli on 21/09/16.
 //  Copyright © 2016 Boris Falcinelli. All rights reserved.
 //
 
 import Foundation
-import AFNetworking
-import UIKit
 
-public func == (l1 : LIRequest, l2 : LIRequest) -> Bool {
-    return l1.LIUID == l2.LIUID
-}
-
-public class LIRequest : Equatable {
-    /**
-     The Content-Type to be set in the response
-     
-     - text/plain
-     - application/json
-     - text/html
-     - image/jpeg
-     */
+public class LIRequest {
+    
+    public struct LoginData {
+        let username : String
+        let password : String
+    }
+    
+    /// Indica il Content-Type di default impostato nell'inizializzazione dell'oggetto LIRequest
+    public var contentType : ContentType
+    
+    /// Indica il valore della chiave di default contenente l'oggetto utile nella risposta
+    public var callbackName : String
+    
+    /// Indica i dati necessari per effettuare il login durante le richiesta
+    public var loginData : LoginData?
+    
+    /// Indica lo User-Agent di default impostato all'inizializzazione dell'oggetto LIRequest
+    public var userAgent : String?
+    
+    /// Indica se dovrè essere visibile l'indicatore di sistema dell'utilizzo della rete
+    public var showNetworkActivityIndicator : Bool
+    internal var isCompleteObject : IsCompleteObject?
+    internal var failureObjects : [FailureObject]
+    internal var successObjects : [SuccessObject]
+    internal var progressObject : ProgressObject?
+    internal var validationResponseObject : ValidationResponseObject
+    internal var progress : Progress!
+    
+    internal var failureCalled : Bool = false
+    internal var successCalled : Bool = false
+    internal var alreadyCalled : Bool { return failureCalled || successCalled }
+    
+    /// Indica quale tipo di codifica dovrà essere utilizzata durante la fase di invio dei parametri nel corpo della richiesta.
+    var encoding : String.Encoding
+    
+    /// Contiene l'oggetto responsabile per la conversione dei parametri durante la fase di preparazione della chiamata.
+    var objectConversion : ObjectConversion?
+    
+    /// Crea una nuova istanza della classe LIRequest.
+    /// I dati per l'inizializzazione di questa istanza vengono presi dal singleton LIRequestInstance
+    ///
+    /// - returns: nuova istanza di LIRequest
+    public init() {
+        self.contentType = LIRequestInstance.shared.contentType
+        self.callbackName = LIRequestInstance.shared.callbackName
+        self.loginData = LIRequestInstance.shared.loginData
+        self.userAgent = LIRequestInstance.shared.userAgent
+        self.showNetworkActivityIndicator = LIRequestInstance.shared.showNetworkActivityIndicator
+        self.isCompleteObject = LIRequestInstance.shared.isCompleteObject
+        self.failureObjects = LIRequestInstance.shared.failureObject != nil ? [LIRequestInstance.shared.failureObject!] : []
+        self.successObjects = LIRequestInstance.shared.successObject != nil ? [LIRequestInstance.shared.successObject!] : []
+        self.validationResponseObject = LIRequestInstance.shared.validationResponseObject
+        self.progressObject = LIRequestInstance.shared.progressObject
+        self.objectConversion = LIRequestInstance.shared.objectConversion
+        self.encoding = LIRequestInstance.shared.encoding
+    }
+    
+    /// Specifica il metodo utilizzato per la chiamata
+    ///
+    /// - post: Il protocollo POST passa le coppie nome-valore nel corpo del messaggio di richiesta HTTP.
+    /// - get:  Il protocollo GET crea una stringa di query delle coppie nome-valore e quindi aggiunge la stringa di query all'URL
+    public enum Method : String {
+        case post = "POST"
+        case get = "GET"
+    }
+    
+    /// Specifica il Content-Type impostato nella richiesta e l' Accept della risposta
+    ///
+    /// - textPlain:
+    /// - applicationJson:
+    /// - textHtml:
+    /// - imageJpeg:
     public enum ContentType : String {
         case textPlain = "text/plain"
         case applicationJson = "application/json"
         case textHtml = "text/html"
         case imageJpeg = "image/jpeg"
-        //case applicationXwwwFormUrlencoded = "application/x-www-form-urlencoded"
+        case applicationFormUrlencoded = "application/x-www-form-urlencoded"
     }
     
-    /**
-     It's a Request Unique Identifier
-     The comparision when == is used check if the LIUID are eguals
-     */
-    let LIUID : String = UUID().uuidString
-    private var contentType : LIRequest.ContentType
-    private(set) var callbackName : String
-    private var loginUsername : String?
-    private var loginPassword : String?
-    private var requestWithLogin : Bool = false
-    private var previousCallbackName : String?
-    private var previousContentType : LIRequest.ContentType?
-    private var subContentType : LIRequest.ContentType?
-    private var callbackForNextCall : Bool = false
-    private var contentTypeForNexCall : Bool = false
-    private var manager : AFHTTPSessionManager
-    private var readingOption : JSONSerialization.ReadingOptions? = nil
-    private var userAgent : String? = nil
-    public var showNetworkActivityIndicator : Bool = true
-    
-    private var failureObject : ((_ object : AnyObject?,_ errorMessage : String)->Void)? = nil
-    private var success : (_ response:AnyObject?)->Void = {_ in }
-    private var additionalSuccess : ((_ response:AnyObject?)->Void)?
-    private var failure : (_ errorMessage : String)->Void = {_ in }
-    private var isComplete : ((_ request : LIRequest, _ state : Bool)->Void)?
-    
-    //MARK: INIT & SET
-    /**
-     Inializes a new request with a Content-Type and callback name and returns it to the caller
-     
-     - Parameters:
-        - contentType: is a Content-Type used in the response
-        - callbackName: default: data. Is a key used in the response object to move the object to the block
-     */
-    public init(contentType ct : LIRequest.ContentType, callbackName cn : String = "data") {
-        contentType = ct
-        callbackName = cn
-        manager = AFHTTPSessionManager()
-    }
-    /**
-     With this method it's possible to set a callback used only in the next call.
-     After that call the callback is reset to the default
-     
-     - Parameter callback: new key for response object
-     */
-    public func setForNextCall(callback : String) {
-        callbackForNextCall = true
-        previousCallbackName = callbackName
-        callbackName = callback
-    }
-    /**
-     It's possible set multple params for the next call
-     
-     - Parameters:
-        - contentType: new Content-Type used in the next call
-        - subContentType: optional, additional Content-Type used in the next call
-        - readingOption: optional, JSON reading option used for read the JSON Object recived in the next call
-     */
-    public func setForNextCall(contentType : LIRequest.ContentType, subContentType sub : LIRequest.ContentType? = nil, readingOption : JSONSerialization.ReadingOptions? = nil) {
-        self.subContentType = sub
-        self.readingOption = readingOption
-        contentTypeForNexCall = true
-        previousContentType = self.contentType
-        self.contentType = contentType
-    }
-    /**
-     It's possible to set username and password for the subsequent requests
-     To disable login in subsequent request user *resetNeedLogin* method
-     
-     - Parameters:
-        - username: username used in the request authorization
-        - password: password used in the request authorization
-     */
-    public func setLogin(username : String, andPassword password : String) {
-        requestWithLogin = true
-        loginUsername = username
-        loginPassword = password
-    }
-    /**
-     When it setted username and password for the requests, it's possible to reset login data and set to off the login
-     To set login data use *setLogin(username:andPassword:)* method
-    */
-    @available(iOS 1.10,*)
-    public func resetNeedLogin() {
-        requestWithLogin = false
-        loginUsername = nil
-        loginPassword = nil
-    }
-    /**
-     The method set the User-Agent in the request
-     
-     - Parameter userAgent: User-Agent to set in the request
-    */
-    public func setUserAgent(_ userAgent : String) {
-        self.userAgent = userAgent
+    /// Effettua una chiamata GET all'indirizzo url con i parametri
+    ///
+    /// - parameter url:    indica l'url a cui sarà indirizzata la chiamata
+    /// - parameter params: specifica i parametri da passare al server durante la chiamata
+    public func get(toURL url : URL, withParams params : [String:Any]?) {
+        self.action(withMethod: .get, toUrl: url, withParams: params)
     }
     
-    //MARK: GET
-    public func get(to urlString : String, withParams params : [String: Any]? = nil) -> URLSessionDataTask? {
-        let requestSerializer = AFHTTPRequestSerializer()
-        if requestWithLogin {
-            requestSerializer.setAuthorizationHeaderFieldWithUsername(self.loginUsername!, password: self.loginPassword!)
-        }
-        if let ua = userAgent {
-            requestSerializer.setValue(ua, forHTTPHeaderField: "User-Agent")
-        }
-        var responseSerializer : AFHTTPResponseSerializer
-        switch contentType {
-        case .applicationJson,.textPlain,.imageJpeg :
-            responseSerializer = AFJSONResponseSerializer()
-            if readingOption != nil {
-                (responseSerializer as! AFJSONResponseSerializer).readingOptions = readingOption!
-            }
-        case.textHtml : responseSerializer = AFHTTPResponseSerializer()
-        }
-        responseSerializer.acceptableContentTypes = Set<String>(arrayLiteral:  contentType.rawValue)
-        if subContentType != nil {
-            responseSerializer.acceptableContentTypes?.insert(subContentType!.rawValue)
-        } else {
-            responseSerializer.acceptableContentTypes?.insert(LIRequest.ContentType.textPlain.rawValue)
-        }
-        manager.responseSerializer = responseSerializer
-        manager.requestSerializer = requestSerializer
-        
-        NSLog("Nuova chiamata GET : %@", urlString)
-        UIApplication.shared.isNetworkActivityIndicatorVisible = showNetworkActivityIndicator
-        return manager.get(urlString, parameters: params, progress: nil, success: { (dataTask, responseObject) -> Void in
-            UIApplication.shared.isNetworkActivityIndicatorVisible = false
-            NSLog("Risposta success per : %@", urlString)
-            if self.contentType == .applicationJson || self.contentType == .textPlain {
-                if let obj = responseObject as? [String:AnyObject] {
-                    if !(obj["success"] as? Bool ?? true) {
-                        self.callbackFailure(with: obj as AnyObject?, andErrorMessage: obj["message"] as! String)
-                    } else {
-                        let currentCallback = self.callbackName
-                        if self.callbackForNextCall {
-                            self.callbackForNextCall = false
-                            self.callbackName = self.previousCallbackName!
-                            self.previousCallbackName = nil
-                        }
-                        if let responseDict = responseObject as? [String:AnyObject] {
-                            if currentCallback == "" {
-                                self.callbackSuccess(with: responseDict as AnyObject?)
-                            } else {
-                                self.callbackSuccess(with: responseDict[currentCallback])
-                            }
-                        } else {
-                            self.callbackSuccess(with: responseObject as AnyObject?)
-                        }
-                    }
-                } else {
-                    self.callbackSuccess(with: responseObject as AnyObject?)
+    /// Effettua una chiamata POST all'indirizzo url con i parametri
+    ///
+    /// - parameter url:    indica l'url a cui sarà indirizzata la chiamata
+    /// - parameter params: specifica i parametri da passare al server durante la chiamata
+    public func post(toURL url : URL, withParams params : [String:Any]?) {
+        self.action(withMethod: .post, toUrl: url, withParams: params)
+    }
+    
+    internal func action(withMethod method:Method, toUrl url : URL, withParams params : [String:Any]?) {
+        var request = self.request(forUrl: url,withMethod: method)
+        if let par = params {
+            var query : String
+            if let obj = self.objectConversion {
+                do {
+                    query = try obj(par)
+                } catch {
+                    query = ""
+                    let error = LIRequestError(forType: .incorrectParametersToSend,withParameters:par)
+                    self.failureObjects.forEach({$0(nil,error)})
                 }
             } else {
-                self.callbackSuccess(with: responseObject as AnyObject?)
+                query = queryString(fromParameter: par)
             }
-            if self.contentTypeForNexCall {
-                self.contentTypeForNexCall = false
-                self.contentType = self.previousContentType!
-            }
-            self.callbackIsComplete(with: true)
-        }) { (dataTask, error) -> Void in
-            UIApplication.shared.isNetworkActivityIndicatorVisible = false
-            NSLog("Risposta failure per : %@", urlString)
-            self.callbackFailure(with: nil, andErrorMessage: error.localizedDescription)
-            self.callbackIsComplete(with: false)
+            request.httpBody = query.data(using: self.encoding)
         }
-    }
-    //MARK: POST
-    public func post(to urlString : String, withParams params : [String:Any]? = nil) -> URLSessionDataTask? {
-        let requestSerializer = AFHTTPRequestSerializer()
-        if params != nil {
-            if let data = try? JSONSerialization.data(withJSONObject: params!, options: JSONSerialization.WritingOptions.prettyPrinted) {
-                debugPrint(String(data: data, encoding: String.Encoding.utf8))
-            }
+        if let body = request.httpBody {
+            let string = String(data: body, encoding: self.encoding)
+            debugPrint(string)
         }
-        if requestWithLogin {
-            requestSerializer.setAuthorizationHeaderFieldWithUsername(self.loginUsername!, password: self.loginPassword!)
+        DispatchQueue.main.async {
+            UIApplication.shared.isNetworkActivityIndicatorVisible = self.showNetworkActivityIndicator
         }
-        if let ua = userAgent {
-            requestSerializer.setValue(ua, forHTTPHeaderField: "User-Agent")
-        }
-        var responseSerializer : AFHTTPResponseSerializer
-        switch contentType {
-        case .applicationJson, .textPlain,.imageJpeg:
-            responseSerializer = AFJSONResponseSerializer()
-            if readingOption != nil {
-                (responseSerializer as! AFJSONResponseSerializer).readingOptions = readingOption!
-            }
-        case .textHtml : responseSerializer = AFHTTPResponseSerializer()
-        }
-        responseSerializer.acceptableContentTypes = Set<String>(arrayLiteral: contentType.rawValue)
-        if subContentType != nil {
-            responseSerializer.acceptableContentTypes?.insert(subContentType!.rawValue)
-        } else {
-            responseSerializer.acceptableContentTypes?.insert(LIRequest.ContentType.textPlain.rawValue)
-        }
-        manager.responseSerializer = responseSerializer
-        manager.requestSerializer = requestSerializer
+        let task = LIRequestInstance.shared.session.downloadTask(with: request)
+        LIRequestInstance.shared.addNewCall(withTash: task, andRequest: self)
         
-//        if contentType == LIRequest.ContentType.applicationXwwwFormUrlencoded {
-//            manager.requestSerializer.setQueryStringSerializationWithBlock({ (request, parameters, error) -> String in
-//                do {
-//                    let data = try JSONSerialization.data(withJSONObject: parameters, options: JSONSerialization.WritingOptions.prettyPrinted)
-//                    let string = NSString(data: data, encoding: String.Encoding.utf8.rawValue)
-//                    return String(describing:string)
-//                } catch {
-//                    debugPrint("Errore nella codifica dei parametri")
-//                    return ""
-//                }
-//            })
+        //        - (NSURLRequest *)requestBySerializingRequest:(NSURLRequest *)request
+        //        withParameters:(id)parameters
+        //        error:(NSError *__autoreleasing *)error
+        //        {
+        //            NSParameterAssert(request);
+        //
+        //            NSMutableURLRequest *mutableRequest = [request mutableCopy];
+        //
+        //            [self.HTTPRequestHeaders enumerateKeysAndObjectsUsingBlock:^(id field, id value, BOOL * __unused stop) {
+        //                if (![request valueForHTTPHeaderField:field]) {
+        //                [mutableRequest setValue:value forHTTPHeaderField:field];
+        //                }
+        //                }];
+        //
+        //            NSString *query = nil;
+        //            if (parameters) {
+        //                if (self.queryStringSerialization) {
+        //                    NSError *serializationError;
+        //                    query = self.queryStringSerialization(request, parameters, &serializationError);
+        //
+        //                    if (serializationError) {
+        //                        if (error) {
+        //                            *error = serializationError;
+        //                        }
+        //
+        //                        return nil;
+        //                    }
+        //                } else {
+        //                    switch (self.queryStringSerializationStyle) {
+        //                    case AFHTTPRequestQueryStringDefaultStyle:
+        //                        query = AFQueryStringFromParameters(parameters);
+        //                        break;
+        //                    }
+        //                }
+        //            }
+        //
+        //            if ([self.HTTPMethodsEncodingParametersInURI containsObject:[[request HTTPMethod] uppercaseString]]) {
+        //                if (query && query.length > 0) {
+        //                    mutableRequest.URL = [NSURL URLWithString:[[mutableRequest.URL absoluteString] stringByAppendingFormat:mutableRequest.URL.query ? @"&%@" : @"?%@", query]];
+        //                }
+        //            } else {
+        //                // #2864: an empty string is a valid x-www-form-urlencoded payload
+        //                if (!query) {
+        //                    query = @"";
+        //                }
+        //                if (![mutableRequest valueForHTTPHeaderField:@"Content-Type"]) {
+        //                    [mutableRequest setValue:@"application/x-www-form-urlencoded" forHTTPHeaderField:@"Content-Type"];
+        //                }
+        //                [mutableRequest setHTTPBody:[query dataUsingEncoding:self.stringEncoding]];
+        //            }
+        //            
+        //            return mutableRequest;
+        //        }
+        
+    }
+    
+    private func queryString(fromParameter params : [String:Any]) -> String {
+        var array : [String] = []
+        for (key,value) in params {
+            array.append(String(format:"%@=%@",key,description(value)))
+        }
+        
+        return array.joined(separator: "&")
+    }
+    
+    private func description(_ item : Any) -> String {
+        if let val = item as? String {
+            return val.description
+        } else
+        if let val = item as? Int {
+            return val.description
+        } else
+        if let val = item as? Double {
+              return val.description
+        } else
+        if let val = item as? Float {
+              return val.description
+        } else
+        if let val = item as? UInt {
+              return val.description
+        } else {
+            assertionFailure("No valid type in description")
+            return ""
+        }
+    
+    //        NSString * AFQueryStringFromParameters(NSDictionary *parameters) {
+    //            NSMutableArray *mutablePairs = [NSMutableArray array];
+    //            for (AFQueryStringPair *pair in AFQueryStringPairsFromDictionary(parameters)) {
+    //                [mutablePairs addObject:[pair URLEncodedStringValue]];
+    //            }
+    //
+    //            return [mutablePairs componentsJoinedByString:@"&"];
+    //        }
+    }
+    
+//    private func encode(key : String, andValue value : String?) -> String {
+//        if value == nil {
+//            return percentEscaped(fromString: key)
+//        } else {
+//            return String(format: "%@=%@", percentEscaped(fromString: key),percentEscaped(fromString: value!))
 //        }
+//    }
+    //        - (NSString *)URLEncodedStringValue {
+    //            if (!self.value || [self.value isEqual:[NSNull null]]) {
+    //                return AFPercentEscapedStringFromString([self.field description]);
+    //            } else {
+    //                return [NSString stringWithFormat:@"%@=%@", AFPercentEscapedStringFromString([self.field description]), AFPercentEscapedStringFromString([self.value description])];
+    //            }
+    //        }
+
+//    private func percentEscaped(fromString string : String) -> String {
+//        let generalDelimiters = ":#[]@"
+//        let subDelimiters = "!$&'()*+,;="
+//        var charset = CharacterSet.urlQueryAllowed
+//        charset.remove(charactersIn: generalDelimiters)
+//        charset.remove(charactersIn: subDelimiters)
+//        
+//        let batchSize : Int = 50
+//        var index : Int = 0
+//        var escaped = ""
+//        while index<string.characters.count {
+//            let length = min(string.characters.count - index, batchSize)
+//            let l = index as! String.Index
+//            let u = length as! String.Index
+//            var range = Range<String.Index>(uncheckedBounds: (lower: l, upper: u))
+//            range = string.rangeOfComposedCharacterSequences(for: range)
+//            let substring = string.substring(with: range)
+//            let encoded = substring.addingPercentEncoding(withAllowedCharacters: charset)
+//            escaped.append(encoded!)
+//            index += range.upperBound
+//        }
+//        return escaped
+//    }
+//    NSString * AFPercentEscapedStringFromString(NSString *string) {
+//    static NSString * const kAFCharactersGeneralDelimitersToEncode = @":#[]@"; // does not include "?" or "/" due to RFC 3986 - Section 3.4
+//    static NSString * const kAFCharactersSubDelimitersToEncode = @"!$&'()*+,;=";
+//    
+//    NSMutableCharacterSet * allowedCharacterSet = [[NSCharacterSet URLQueryAllowedCharacterSet] mutableCopy];
+//    [allowedCharacterSet removeCharactersInString:[kAFCharactersGeneralDelimitersToEncode stringByAppendingString:kAFCharactersSubDelimitersToEncode]];
+//    
+//    // FIXME: https://github.com/AFNetworking/AFNetworking/pull/3028
+//    // return [string stringByAddingPercentEncodingWithAllowedCharacters:allowedCharacterSet];
+//    
+//    static NSUInteger const batchSize = 50;
+//    
+//    NSUInteger index = 0;
+//    NSMutableString *escaped = @"".mutableCopy;
+//    
+//    while (index < string.length) {
+//    #pragma GCC diagnostic push
+//    #pragma GCC diagnostic ignored "-Wgnu"
+//    NSUInteger length = MIN(string.length - index, batchSize);
+//    #pragma GCC diagnostic pop
+//    NSRange range = NSMakeRange(index, length);
+//    
+//    // To avoid breaking up character sequences such as 👴🏻👮🏽
+//    range = [string rangeOfComposedCharacterSequencesForRange:range];
+//    
+//    NSString *substring = [string substringWithRange:range];
+//    NSString *encoded = [substring stringByAddingPercentEncodingWithAllowedCharacters:allowedCharacterSet];
+//    [escaped appendString:encoded];
+//    
+//    index += range.length;
+//    }
+//    
+//    return escaped;
+//    }
     
-        NSLog("Nuova chiamata POST : %@", urlString)
-        UIApplication.shared.isNetworkActivityIndicatorVisible = showNetworkActivityIndicator
-        return manager.post(urlString, parameters: params, progress: nil, success: { (dataTask, responseObject) -> Void in
-            UIApplication.shared.isNetworkActivityIndicatorVisible = false
-            if self.contentType == .applicationJson || self.contentType == .textPlain {
-                if let obj = responseObject as? [String:AnyObject] {
-                    if !(obj["success"] as? Bool ?? true) {
-                        debugPrint(obj)
-                        self.callbackFailure(with: obj as AnyObject?, andErrorMessage: obj["message"] as! String)
-                    } else {
-                        NSLog("Risposta success per : %@", urlString)
-                        let currentCallback = self.callbackName
-                        if self.callbackForNextCall {
-                            self.callbackForNextCall = false
-                            self.callbackName = self.previousCallbackName!
-                            self.previousCallbackName = nil
-                        }
-                        
-                        let response = responseObject as! [String:AnyObject]
-                        if currentCallback == "" {
-                            self.callbackSuccess(with: response as AnyObject?)
-                        } else {
-                            self.callbackSuccess(with: response[currentCallback])
-                        }
-                    }
-                } else {
-                    self.callbackSuccess(with: responseObject as AnyObject?)
-                }
-            } else {
-                self.callbackSuccess(with: responseObject as AnyObject?)
-            }
-            if self.contentTypeForNexCall {
-                self.contentTypeForNexCall = false
-                self.contentType = self.previousContentType!
-            }
-            self.callbackIsComplete(with: true)
-        }) { (dataTask, error) -> Void in
-            UIApplication.shared.isNetworkActivityIndicatorVisible = false
-            NSLog("Risposta failure per : %@", urlString)
-            debugPrint(error)
-            self.callbackFailure(with: error as AnyObject?, andErrorMessage: error.localizedDescription)
-            self.callbackIsComplete(with: false)
+    public func post(toURL url : URL, withImage image : UIImage, andFileName fileName : String, andParamImageName paramImageName : String?, andParams params : [String:Any]?) {
+        
+
+//        NSArray * AFQueryStringPairsFromKeyAndValue(NSString *key, id value) {
+//            NSMutableArray *mutableQueryStringComponents = [NSMutableArray array];
+//            
+//            NSSortDescriptor *sortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"description" ascending:YES selector:@selector(compare:)];
+//            
+//            if ([value isKindOfClass:[NSDictionary class]]) {
+//                NSDictionary *dictionary = value;
+//                // Sort dictionary keys to ensure consistent ordering in query string, which is important when deserializing potentially ambiguous sequences, such as an array of dictionaries
+//                for (id nestedKey in [dictionary.allKeys sortedArrayUsingDescriptors:@[ sortDescriptor ]]) {
+//                    id nestedValue = dictionary[nestedKey];
+//                    if (nestedValue) {
+//                        [mutableQueryStringComponents addObjectsFromArray:AFQueryStringPairsFromKeyAndValue((key ? [NSString stringWithFormat:@"%@[%@]", key, nestedKey] : nestedKey), nestedValue)];
+//                    }
+//                }
+//            } else if ([value isKindOfClass:[NSArray class]]) {
+//                NSArray *array = value;
+//                for (id nestedValue in array) {
+//                    [mutableQueryStringComponents addObjectsFromArray:AFQueryStringPairsFromKeyAndValue([NSString stringWithFormat:@"%@[]", key], nestedValue)];
+//                }
+//            } else if ([value isKindOfClass:[NSSet class]]) {
+//                NSSet *set = value;
+//                for (id obj in [set sortedArrayUsingDescriptors:@[ sortDescriptor ]]) {
+//                    [mutableQueryStringComponents addObjectsFromArray:AFQueryStringPairsFromKeyAndValue(key, obj)];
+//                }
+//            } else {
+//                [mutableQueryStringComponents addObject:[[AFQueryStringPair alloc] initWithField:key value:value]];
+//            }
+//            
+//            return mutableQueryStringComponents;
+//        }
+
+        
+        
+        var request = self.request(forUrl: url,withMethod: .post)
+        request.setValue("multipart/form-data", forHTTPHeaderField: "Content-Type")
+        guard let imageData = UIImagePNGRepresentation(image) else {
+            self.failureObjects.forEach({ $0(nil,LIRequestError(forType: .incorrectImageToSend))})
+            return
         }
+        var body = Data()
+        let boundary = generateBoundaryString()
+        let boundaryData = NSString(string:"--\(boundary)\r\n").data(using: self.encoding.rawValue)
+        body.append(boundaryData!)
+        let contentDispositionData = NSString(string:"Content-Disposition:form-data;name\"test\"\r\n\r\n").data(using: self.encoding.rawValue)!
+        body.append(contentDispositionData)
+        let contentTypeData = NSString(string: "Content-Type:\(ContentType.imageJpeg.rawValue)\r\n\r\n").data(using: self.encoding.rawValue)!
+        body.append(contentTypeData)
+        body.append(imageData)
+        let endData = NSString(string: "\r\n").data(using: self.encoding.rawValue)!
+        body.append(endData)
+        let endBoundaryData = NSString(string:"--\(boundary)--\r\n").data(using: self.encoding.rawValue)!
+        body.append(endBoundaryData)
+        request.httpBody = body
+        
+        let task = LIRequestInstance.shared.session.uploadTask(with: request, from: imageData)
+        
+        
+        LIRequestInstance.shared.addNewCall(withTash: task, andRequest: self)
     }
     
-    public func post(to urlString : String, withImage image : UIImage, andFileName name : String, andParams params : [String:Any]?) -> URLSessionDataTask?{
-        return post(to:urlString, withImage: image, andFileName: name, andParams: params, andParamsName: nil, uploadProgressBlock: nil)
-    }
-    
-    public func post(to urlString : String, withImage image : UIImage, andFileName name : String, andParams params : [String:Any]?, uploadProgressBlock block : ((_ percentage:Progress)->Void)?) -> URLSessionDataTask?{
-        return post(to:urlString, withImage: image, andFileName: name, andParams: params, andParamsName: nil, uploadProgressBlock: block)
-    }
-    
-    public func post(to urlString : String, withImage image : UIImage, andFileName fileName : String, andParams params : [String:Any]?, andParamsName paramsName : String?, uploadProgressBlock block : ((_ percentage:Progress)-> Void)?) -> URLSessionDataTask? {
-        return post(to: urlString, withData: UIImagePNGRepresentation(image)!, withFileName: fileName, andParams: params, andParamsName: paramsName, uploadProgressBlock: block)
-    }
-    
-    public func post(to urlString : String, withData data : Data, withFileName fileName : String, andParams params : [String:Any]?, andParamsName paramsName : String?, uploadProgressBlock block : ((_ progress : Progress)->Void)?) -> URLSessionDataTask? {
-        let requestSerializer = AFHTTPRequestSerializer()
-        requestSerializer.setValue(LIRequest.ContentType.imageJpeg.rawValue, forHTTPHeaderField: "Content-Type")
-        if requestWithLogin {
-            requestSerializer.setAuthorizationHeaderFieldWithUsername(loginUsername!, password: loginPassword!)
-        }
+    private func request(forUrl url : URL,withMethod method : Method) -> URLRequest {
+        var request = URLRequest(url: url)
+        request.httpMethod = method.rawValue
+        request.addValue(self.contentType.rawValue, forHTTPHeaderField: "Content-Type")
+        request.addValue(self.contentType.rawValue, forHTTPHeaderField: "Accept")
         if let ua = userAgent {
-            requestSerializer.setValue(ua, forHTTPHeaderField: "User-Agent")
+            request.addValue(ua, forHTTPHeaderField: "User-Agent")
         }
-        var responseSerializer : AFHTTPResponseSerializer
-        switch contentType {
-        case .applicationJson, .textPlain, .imageJpeg: responseSerializer = AFJSONResponseSerializer()
-        case .textHtml: responseSerializer = AFHTTPResponseSerializer()
+        if let ld = loginData {
+            let userString = NSString(format:"%@:%@",ld.username,ld.password)
+            let authData = userString.data(using: self.encoding.rawValue)
+            let base64EncodedCredential = authData!.base64EncodedData()
+            let authString = "Basic \(base64EncodedCredential)"
+            request.addValue(authString, forHTTPHeaderField: "Authorization")
         }
-        responseSerializer.acceptableContentTypes = Set<String>(arrayLiteral:  contentType.rawValue,LIRequest.ContentType.textPlain.rawValue)
-        manager.responseSerializer = responseSerializer
-        manager.requestSerializer = requestSerializer
-        
-        NSLog("Nuova chiamata POST : %@", urlString)
-        UIApplication.shared.isNetworkActivityIndicatorVisible = showNetworkActivityIndicator
-        return manager.post(urlString, parameters: params, constructingBodyWith: { (formData) -> Void in
-            formData.appendPart(withFileData: data, name: paramsName ?? "", fileName: fileName, mimeType: LIRequest.ContentType.imageJpeg.rawValue)
-            }, progress: { (progress) -> Void in
-                DispatchQueue.main.async(execute: {
-                    block?(progress)
-                })
-            }, success: { (dataTask, responseObject) -> Void in
-                UIApplication.shared.isNetworkActivityIndicatorVisible = false
-                if responseObject is NSData {
-                    if [LIRequest.ContentType.textHtml,LIRequest.ContentType.textPlain].contains(self.contentType) {
-                        self.callbackSuccess(with: responseObject as AnyObject?)
-                    } else {
-                        self.callbackFailure(with: responseObject as AnyObject?, andErrorMessage: "found data instead object")
-                    }
-                } else {
-                    let obj = responseObject as! [String:AnyObject]
-                    if !(obj["success"] as? Bool ?? true) {
-                        self.callbackFailure(with: obj as AnyObject?, andErrorMessage: obj["message"] as! String)
-                    } else {
-                        let currentCallback = self.callbackName
-                        if self.callbackForNextCall {
-                            self.callbackForNextCall = false
-                            self.callbackName = self.previousCallbackName!
-                            self.previousCallbackName = nil
-                        }
-                        
-                        let response = responseObject as! [String:AnyObject]
-                        if currentCallback == "" {
-                            self.callbackSuccess(with: response as AnyObject?)
-                        } else {
-                            self.callbackSuccess(with: response[currentCallback])
-                        }
-                    }
-                }
-                self.callbackIsComplete(with: true)
-        }) { (dataTask, error) -> Void in
-            UIApplication.shared.isNetworkActivityIndicatorVisible = false
-            self.callbackFailure(with: nil, andErrorMessage: error.localizedDescription)
-            self.callbackIsComplete(with: false)
-        }
+        return request
     }
     
-    public func abortAllOperation() {
-        manager.operationQueue.cancelAllOperations()
+    private func generateBoundaryString() -> String{
+        return "Boundary-\(NSUUID().uuidString)"
     }
     
-  
-    public func setIsComplete(with isCompleteHandler : ((_ request:LIRequest, _ state : Bool)->Void)?) {
-        isComplete = isCompleteHandler
-    }
-    
-    public func setSuccess(with successHandler : @escaping (_ responseObject:AnyObject?)->Void) {
-        success = successHandler
-    }
-    
-    public func setAdditionalSuccess(with additionalSuccessHandler : ((_ responseObject:AnyObject?)->Void)?) {
-        self.additionalSuccess = additionalSuccessHandler
-    }
-    
-    public func setFailure(with failureHandler : @escaping (_ errorMessage : String)->Void) {
-        failure = failureHandler
-    }
-    
-    @available(*,unavailable)
-    public func setFailureWithObject(_ failureHandler : (_ object : AnyObject?)->Void) {
-    }
-    
-    public func setFailure(withObject failureHandler : ((_ object : AnyObject?,_ errorMessage : String)->Void)?) {
-        failureObject = failureHandler
-    }
-    
-    func callbackIsComplete(with state : Bool) {
-        self.isComplete?(self,state)
-    }
-    
-    func callbackFailure(with object: AnyObject?,andErrorMessage errorText : String) {
-        NSLog("Error call : %@", errorText)
-        if failureObject != nil {
-            failureObject!(object,errorText)
+    /// Imposta il blocco da eseguire al completamento della chiamata.
+    /// Viene richiamato sia che la chiamata è andata a buon fine che in errore
+    ///
+    /// - parameter object:   blocco di completamento
+    /// - parameter override: se true sovrascrive il blocco, altrimenti esegue prima quello delle configurazioni e poi quello passato
+    public func setIsComplete(withObject object : IsCompleteObject?, overrideDefault override : Bool=false) {
+        if override {
+            self.isCompleteObject = object
         } else {
-            failure(errorText)
+            self.setIsComplete(withObject: { (request, success) in
+                LIRequestInstance.shared.isCompleteObject?(request,success)
+                object?(request,success)
+                }, overrideDefault: true)
         }
     }
     
-    func callbackSuccess(with response: AnyObject?) {
-        additionalSuccess?(response)
-        success(response)
+    /// Imposta il blocco da eseguire in caso di errore nella chiamata
+    ///
+    /// - parameter object:   blocco di errore
+    /// - parameter override: se true sovrascrive il blocco, altrimenti esegue prima quello delle configurazioni e poi quello passato
+    public func setFailure(withObject object : @escaping FailureObject, overrideDefault override : Bool=false) {
+        if override {
+            self.failureObjects = [object]
+        } else {
+            self.addFailure(withObject: object)
+        }
     }
     
+    /// Aggiunge il blocco in coda ai blocchi già presenti
+    ///
+    /// - parameter object: blocco del failure
+    public func addFailure(withObject object : @escaping FailureObject) {
+        self.failureObjects.append(object)
+    }
     
-    @available(*,deprecated: 1.6,renamed: "callbackSuccess(with:)")
-    func callbackSuccess(_ response: AnyObject?) {
-        self.callbackSuccess(with: response)
-        
+    /// Imposta il blocco da eseguire in caso di successo nella chiamata
+    ///
+    /// - parameter object:   blocco di successo
+    /// - parameter override: se true sovrascrive il blocco, altrimenti esegue prima quello delle configurazioni e poi quello passato
+    public func setSuccess(withObject object : @escaping SuccessObject, overrideDefault override : Bool=false) {
+        if override {
+            self.successObjects = [object]
+        } else {
+            self.addSuccess(withObject: object)
+        }
     }
-    @available(*,deprecated: 1.6,renamed: "callbackFailure(with:)")
-    func callbackFailure(_ object: AnyObject?,withErrorMessage errorText : String) {
-        self.callbackFailure(with: object, andErrorMessage: errorText)
+    
+    /// Aggiunge il blocco in coda ai blocchi già presenti
+    ///
+    /// - parameter object: blocco di success
+    public func addSuccess(withObject object : @escaping SuccessObject) {
+        self.successObjects.append(object)
     }
-    @available(*,deprecated: 1.6,renamed: "callbackFailure(with:)")
-    func callbackFailure(_ errorMessage : String) {
-        self.callbackFailure(with:nil,andErrorMessage: errorMessage)
+    
+    /// Imposta il blocco da eseguire durante l'avanzamento della chiamata
+    ///
+    /// - parameter object:   blocco d'avanzamento
+    /// - parameter override: se true sovrascrive il blocco, altrimenti esegue prima quello delle configurazioni e poi quello passato
+    public func setProgress(withObject object : ProgressObject?, overrideDefault override : Bool=false) {
+        if override {
+            self.progressObject = object
+        } else {
+            self.setProgress(withObject: { (progress) in
+                LIRequestInstance.shared.progressObject?(progress)
+                object?(progress)
+                }, overrideDefault: true)
+        }
     }
-    @available(*,deprecated: 1.6,renamed: "callbackIsComplete(with:)")
-    func callbackIsComplete(_ state : Bool) {
-        self.callbackIsComplete(with: state)
+    
+    /// Imposta il blocco da eseguire per la validazione dei dati
+    ///
+    /// - parameter object:   blocco di validazione dati
+    /// - parameter override: se true sovrascrive il blocco, altrimenti esegue prima quello delle configurazioni e poi quello passato
+    public func setValidation(withObject object : @escaping ValidationResponseObject, overrideDefault override : Bool=false) {
+        if override {
+            self.validationResponseObject = object
+        } else {
+            self.setValidation(withObject: { (response) -> Bool in
+                return LIRequestInstance.shared.validationResponseObject(response) && object(response)
+                }, overrideDefault: true)
+        }
     }
-    @available(*,deprecated: 1.6,renamed: "setFailure(withObject:)")
-    public func setFailureWithObject(_ failureHandler : ((_ object : AnyObject?,_ errorMessage : String)->Void)?) {
-        self.setFailure(withObject: failureHandler)
-    }
-    @available(*,deprecated:1.6,renamed:"setFailure(with:)")
-    public func setFailure(_ failureHandler : @escaping (_ errorMessage : String)->Void) {
-        self.setFailure(with: failureHandler)
-    }
-    @available(*,deprecated:1.6,renamed:"setSuccess(with:)")
-    public func setSuccess(_ successHandler : @escaping (_ responseObject:AnyObject?)->Void) {
-        self.setSuccess(with: successHandler)
-    }
-    @available(*,deprecated:1.6,renamed:"setIsComplete(with:)")
-    public func setIsComplete(_ isCompleteHandler : ((_ request:LIRequest, _ state : Bool)->Void)?) {
-        self.setIsComplete(with: isCompleteHandler)
-    }
-    @available(*,deprecated:1.6,renamed:"setLogin(username:andPassword:)")
-    public func setLoginUsername(_ username : String, andLoginPassword password : String) {
-        self.setLogin(username: username, andPassword: password)
-    }
-    @available(*,deprecated:1.6,renamed:"setForNextCall(contentType:subContentType:readingOption:)")
-    public func setContentTypeForNextCall(_ contentType : LIRequest.ContentType, subContentType sub : LIRequest.ContentType? = nil, readingOption : JSONSerialization.ReadingOptions? = nil) {
-        self.setForNextCall(contentType: contentType, subContentType: sub, readingOption: readingOption)
-    }
-    @available(*,deprecated:1.6,message: "use setForNextCall(callback:) instead")
-    public func setCallbackNameForNextCall(_ callback : String) {
-        self.setForNextCall(callback: callback)
-    }
-    @available(*,deprecated:1.6,renamed: "get(to:withParams:)")
-    public func get(_ url : String, andParams params : [String: AnyObject]? = nil) -> URLSessionDataTask? {
-        return get(to: url, withParams: params)
-    }
-    @available(*,deprecated: 1.6,renamed: "post(to:withParams:)")
-    public func post(_ url : String, andParams params : [String:AnyObject]? = nil) -> URLSessionDataTask? {
-        return post(to: url, withParams: params)
-    }
-    @available(*,deprecated: 1.6,renamed: "post(to:withImage:andFileName:andParams:)")
-    public func post(_ url : String, andImage image : UIImage, withFileName name : String, andParams params : [String:AnyObject]?) -> URLSessionDataTask? {
-        return post(to: url, withImage: image, andFileName: name, andParams: params)
-    }
-    @available(*,deprecated:1.6,renamed:"post(to:withImage:andFileName:andParams:uploadProgressBlock:)")
-    public func post(_ url : String, andImage image : UIImage, withFileName name : String, andParams params : [String:AnyObject]?, uploadProgressBlock block : ((_ percentage:Progress)->Void)?) -> URLSessionDataTask? {
-        return post(to: url, withImage: image, andFileName: name, andParams: params, uploadProgressBlock: block)
-    }
-    @available(*,deprecated:1.6,renamed: "post(to:withImage:andFileName:params:andParamsName:uploadProgressBlock:)")
-    public func post(_ url : String, andImage image : UIImage, withFileName fileName : String, andParams params : [String:AnyObject]?, andParamsName paramsName : String?, uploadProgressBlock block : ((_ percentage:Progress)-> Void)?) -> URLSessionDataTask? {
-        return post(to: url, withImage: image, andFileName: fileName, andParams: params, andParamsName: paramsName, uploadProgressBlock: block)
-    }
-    @available(*,deprecated:1.6,renamed: "post(to:withData:andFileName:andParams:andParamsName:uploadProgressBlock:)")
-    public func post(_ url : String, andData data : Data, withFileName fileName : String, andParams params : [String:AnyObject]?, andParamsName paramsName : String?, uploadProgressBlock block : ((_ progress : Progress)->Void)?) -> URLSessionDataTask? {
-        return post(to: url, withData: data, withFileName: fileName, andParams: params, andParamsName: paramsName, uploadProgressBlock: block)
+    
+    /// Rimuove il blocco della validazione dei dati per l'istanza corrente
+    public func removeValidation() {
+        self.setValidation(withObject: { (_) -> Bool in
+            return true
+            }, overrideDefault: true)
     }
 }
 
-@available(*,deprecated:1.6,renamed:"LIRequest.ContentType")
-public enum LIRequestContentType : String {
-    case TextPlain = "text/plain"
-    case ApplicationJson = "application/json"
-    case TextHtml = "text/html"
-    case ImageJpeg = "image/jpeg"
+func LILocalizedString(_ key : String,comment : String) -> String {
+    return NSLocalizedString(key, tableName: "LIRequestLocalizable", comment: comment)
+}
+
+class LIRequestError : NSError {
+
+    /// Definisce il tipo di errore possibile in LIRequest.
+    /// Per ogni tipo di errore definisce la descrizione dell'errore, il motivo per cui si è verificato ed un eventuale metodo di risoluzione
+    ///
+    /// - invalidUrl
+    /// - errorInRespose
+    /// - noDataInResponse
+    /// - incorrectResponseContentType
+    /// - incorrectParametersToSend
+    /// - incorrectImageToSend
+    internal enum ErrorType : Int, LocalizedError {
+        case invalidUrl = 400
+        case errorInResponse = 406
+        case noDataInResponse = 407
+        case incorrectResponseContentType = 500
+        case incorrectParametersToSend = 600
+        case incorrectImageToSend = -145
+        
+        internal var errorDescription: String? {
+            switch self {
+            default:
+                return NSLocalizedString("ErrorCall", comment: "")
+            }
+        }
+        
+        var failureReason: String? {
+            switch self {
+            case .invalidUrl:
+                return LILocalizedString("ErrorInvalidUrl", comment: "")
+            case .errorInResponse:
+                return LILocalizedString("ErrorInResponse", comment: "")
+            case .noDataInResponse:
+                return LILocalizedString("ErrorNoDataInResponse", comment: "")
+            case .incorrectResponseContentType:
+                return LILocalizedString("ErrorIncorrectContentType", comment: "")
+            case .incorrectParametersToSend:
+                return LILocalizedString("ErrorIncorrectParametersToSend", comment: "")
+            case .incorrectImageToSend:
+                return LILocalizedString("ErrorIncorrectImageToSend", comment: "")
+            }
+        }
+        
+        internal var recoverySuggestion: String? {
+            switch self {
+            case .invalidUrl:
+                return LILocalizedString("ErrorInvalidUrlSuggestion", comment: "")
+            case .incorrectImageToSend:
+                fallthrough
+            case .incorrectParametersToSend:
+                fallthrough
+            case .noDataInResponse:
+                fallthrough
+            case .incorrectResponseContentType:
+                fallthrough
+            case .errorInResponse:
+                return nil
+            }
+        }
+    }
+    
+    init(forType type : ErrorType,
+        withUrlString url:String?=nil,
+        withErrorString string : String? = nil,
+        withParameters params : [AnyHashable:Any]? = nil) {
+        let domain = "net.labinfo.LIRequest"
+        let code = type.rawValue
+        var userInfo : [AnyHashable:Any] = [NSLocalizedDescriptionKey:type.errorDescription,
+                                            NSLocalizedFailureReasonErrorKey:type.failureReason,
+                                            NSLocalizedRecoverySuggestionErrorKey:type.recoverySuggestion]
+        if let u = url {
+            userInfo["LIRequestURL"] = u
+        }
+        if let e = string {
+            userInfo[NSLocalizedDescriptionKey] = e
+        }
+        if let p = params {
+            userInfo["LIRequestParametersCausedError"] = "\(type.failureReason ?? "") : \(p)"
+        }
+        super.init(domain: domain, code: code, userInfo: userInfo)
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        super.init(coder: aDecoder)
+    }
 }
