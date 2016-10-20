@@ -475,6 +475,10 @@ public class LIRequest {
     }
 }
 
+func LILocalizedString(_ key : String,comment : String) -> String {
+    return NSLocalizedString(key, tableName: "LIRequestLocalizable", comment: comment)
+}
+
 class LIRequestError : NSError {
 
     /// Definisce il tipo di errore possibile in LIRequest.
@@ -504,24 +508,24 @@ class LIRequestError : NSError {
         var failureReason: String? {
             switch self {
             case .invalidUrl:
-                return NSLocalizedString("ErrorInvalidUrl", comment: "")
+                return LILocalizedString("ErrorInvalidUrl", comment: "")
             case .errorInResponse:
-                return NSLocalizedString("ErrorInResponse", comment: "")
+                return LILocalizedString("ErrorInResponse", comment: "")
             case .noDataInResponse:
-                return NSLocalizedString("ErrorNoDataInResponse", comment: "")
+                return LILocalizedString("ErrorNoDataInResponse", comment: "")
             case .incorrectResponseContentType:
-                return NSLocalizedString("ErrorIncorrectContentType", comment: "")
+                return LILocalizedString("ErrorIncorrectContentType", comment: "")
             case .incorrectParametersToSend:
-                return NSLocalizedString("ErrorIncorrectParametersToSend", comment: "")
+                return LILocalizedString("ErrorIncorrectParametersToSend", comment: "")
             case .incorrectImageToSend:
-                return NSLocalizedString("ErrorIncorrectImageToSend", comment: "")
+                return LILocalizedString("ErrorIncorrectImageToSend", comment: "")
             }
         }
         
         internal var recoverySuggestion: String? {
             switch self {
             case .invalidUrl:
-                return NSLocalizedString("ErrorInvalidUrlSuggestion", comment: "")
+                return LILocalizedString("ErrorInvalidUrlSuggestion", comment: "")
             case .incorrectImageToSend:
                 fallthrough
             case .incorrectParametersToSend:
