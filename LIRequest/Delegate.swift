@@ -47,7 +47,7 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
         }
         let string = String(data: data, encoding: .utf8)
         debugPrint(string)
-        if [.applicationJson,.textPlain].contains(request.contentType) {
+        if [.applicationJson,.textPlain,.applicationFormUrlencoded].contains(request.contentType) {
             guard let objectJSON = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers) else {
                 self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .incorrectResponseContentType,withUrlString:downloadTask.currentRequest?.url?.absoluteString))
                 return
