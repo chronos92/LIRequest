@@ -455,13 +455,13 @@ public class LIRequest {
             }, overrideDefault: true)
     }
     
-    internal func callSuccess(withObject object : Any, andMessage message : String?) {
+    internal func callSuccess(withObject object : Any?, andMessage message : String?) {
         self.successObjects.forEach { (success) in
             success(object,message)
         }
     }
     
-    internal func callFailure(withObject object:Any?,andError error : Error?) {
+    internal func callFailure(withObject object:Any?,andError error : Error) {
         self.failureObjects.forEach { (failure) in
             failure(object,error)
         }
