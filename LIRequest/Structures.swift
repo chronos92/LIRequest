@@ -49,23 +49,23 @@ extension LIRequest {
             return lhs.key == rhs.key
         }
 
-        let key : String
-        init(key k : String) {
+        public let key : String
+        public init(key k : String) {
             key = k
         }
-        static let textPlain = ContentType(key: "text/plain")
-        static let textHtml = ContentType(key: "text/html")
-        static let textCss = ContentType(key: "text/css")
-        static let textCsv = ContentType(key: "text/csv")
+        public static let textPlain = ContentType(key: "text/plain")
+        public static let textHtml = ContentType(key: "text/html")
+        public static let textCss = ContentType(key: "text/css")
+        public static let textCsv = ContentType(key: "text/csv")
         
-        static let applicationJson = ContentType(key: "application/json")
-        static let applicationOctetStream = ContentType(key: "application/octet-stream")
-        static let applicationFormUrlencoded = ContentType(key: "application/x-www-form-urlencoded")
-        static let applicationPdf = ContentType(key: "application/pdf")
+        public static let applicationJson = ContentType(key: "application/json")
+        public static let applicationOctetStream = ContentType(key: "application/octet-stream")
+        public static let applicationFormUrlencoded = ContentType(key: "application/x-www-form-urlencoded")
+        public static let applicationPdf = ContentType(key: "application/pdf")
         
-        static let imageJpeg = ContentType(key: "image/jpeg")
-        static let imageBmp = ContentType(key: "image/bmp")
-        static let imageGif = ContentType(key: "image/gif")
+        public static let imageJpeg = ContentType(key: "image/jpeg")
+        public static let imageBmp = ContentType(key: "image/bmp")
+        public static let imageGif = ContentType(key: "image/gif")
         
         
         static let multipartFormData = ContentType(key: "multipart/form-data")
