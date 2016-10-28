@@ -8,8 +8,13 @@
 
 import Foundation
 
-public class LIRequest {
+public class LIRequest : Equatable {
     
+    public static func ==(lhs: LIRequest, rhs: LIRequest) -> Bool {
+        return lhs.uniqueIdentifier == rhs.uniqueIdentifier
+    }
+    
+    let uniqueIdentifier : String = NSUUID().uuidString
     public struct LoginData {
         let username : String
         let password : String
