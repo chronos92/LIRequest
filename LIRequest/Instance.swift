@@ -70,19 +70,19 @@ public class LIRequestInstance : NSObject {
     
     func addNewCall(withTash task : URLSessionTask, andRequest request: LIRequest) {
         let success = request.successObjects
-        request.setSuccess(withObject: { (obj, msg) in
+        request.setSuccess(overrideDefault: true, withObject: { (obj, msg) in
             DispatchQueue.main.async {
                 success.forEach({ $0(obj,msg) })
             }
             request.successCalled = true
-            }, overrideDefault: true)
+        })
         let failure = request.failureObjects
-        request.setFailure(withObject: { (obj, msg) in
+        request.setFailure(overrideDefault: true, withObject: { (obj, msg) in
             DispatchQueue.main.async {
                 failure.forEach({ $0(obj,msg) })
             }
             request.failureCalled = true
-            }, overrideDefault: true)
+        })
         requestForTask[task.taskIdentifier] = request
         listOfCall.append(task)
         task.resume()

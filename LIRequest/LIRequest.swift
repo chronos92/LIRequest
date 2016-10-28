@@ -375,14 +375,14 @@ public class LIRequest : Equatable {
     ///
     /// - parameter object:   blocco di completamento
     /// - parameter override: se true sovrascrive il blocco, altrimenti esegue prima quello delle configurazioni e poi quello passato
-    public func setIsComplete(withObject object : IsCompleteObject?, overrideDefault override : Bool=false) {
+    public func setIsComplete(overrideDefault override : Bool=false, withObject object : IsCompleteObject?) {
         if override {
             self.isCompleteObject = object
         } else {
-            self.setIsComplete(withObject: { (request, success) in
+            self.setIsComplete(overrideDefault: true, withObject: { (request, success) in
                 LIRequestInstance.shared.isCompleteObject?(request,success)
                 object?(request,success)
-                }, overrideDefault: true)
+            })
         }
     }
     
@@ -390,7 +390,7 @@ public class LIRequest : Equatable {
     ///
     /// - parameter object:   blocco di errore
     /// - parameter override: se true sovrascrive il blocco, altrimenti esegue prima quello delle configurazioni e poi quello passato
-    public func setFailure(withObject object : @escaping FailureObject, overrideDefault override : Bool=false) {
+    public func setFailure( overrideDefault override : Bool=false,withObject object : @escaping FailureObject) {
         if override {
             self.failureObjects = [object]
         } else {
@@ -409,7 +409,7 @@ public class LIRequest : Equatable {
     ///
     /// - parameter object:   blocco di successo
     /// - parameter override: se true sovrascrive il blocco, altrimenti esegue prima quello delle configurazioni e poi quello passato
-    public func setSuccess(withObject object : @escaping SuccessObject, overrideDefault override : Bool=false) {
+    public func setSuccess( overrideDefault override : Bool=false,withObject object : @escaping SuccessObject) {
         if override {
             self.successObjects = [object]
         } else {
@@ -428,14 +428,14 @@ public class LIRequest : Equatable {
     ///
     /// - parameter object:   blocco d'avanzamento
     /// - parameter override: se true sovrascrive il blocco, altrimenti esegue prima quello delle configurazioni e poi quello passato
-    public func setProgress(withObject object : ProgressObject?, overrideDefault override : Bool=false) {
+    public func setProgress( overrideDefault override : Bool=false, withObject object : ProgressObject?) {
         if override {
             self.progressObject = object
         } else {
-            self.setProgress(withObject: { (progress) in
+            self.setProgress(overrideDefault: true, withObject: { (progress) in
                 LIRequestInstance.shared.progressObject?(progress)
                 object?(progress)
-                }, overrideDefault: true)
+            })
         }
     }
     
@@ -443,21 +443,21 @@ public class LIRequest : Equatable {
     ///
     /// - parameter object:   blocco di validazione dati
     /// - parameter override: se true sovrascrive il blocco, altrimenti esegue prima quello delle configurazioni e poi quello passato
-    public func setValidation(withObject object : @escaping ValidationResponseObject, overrideDefault override : Bool=false) {
+    public func setValidation(overrideDefault override : Bool=false,withObject object : @escaping ValidationResponseObject) {
         if override {
             self.validationResponseObject = object
         } else {
-            self.setValidation(withObject: { (response) -> Bool in
+            self.setValidation(overrideDefault: true, withObject: { (response) -> Bool in
                 return LIRequestInstance.shared.validationResponseObject(response) && object(response)
-                }, overrideDefault: true)
+            })
         }
     }
     
     /// Rimuove il blocco della validazione dei dati per l'istanza corrente
     public func removeValidation() {
-        self.setValidation(withObject: { (_) -> Bool in
+        self.setValidation(overrideDefault: true, withObject: { (_) -> Bool in
             return true
-            }, overrideDefault: true)
+        })
     }
     
     internal func callSuccess(withObject object : Any?, andMessage message : String?) {
