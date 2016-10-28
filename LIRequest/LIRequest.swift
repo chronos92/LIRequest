@@ -109,7 +109,7 @@ public class LIRequest : Equatable {
         }
         if let body = request.httpBody {
             let string = String(data: body, encoding: self.encoding)
-            debugPrint(string)
+            debugPrint(string ?? "[LIRequest] empty body")
         }
         DispatchQueue.main.async {
             UIApplication.shared.isNetworkActivityIndicatorVisible = self.showNetworkActivityIndicator
@@ -544,9 +544,9 @@ class LIRequestError : NSError {
         withParameters params : [AnyHashable:Any]? = nil) {
         let domain = "net.labinfo.LIRequest"
         let code = type.rawValue
-        var userInfo : [AnyHashable:Any] = [NSLocalizedDescriptionKey:type.errorDescription,
-                                            NSLocalizedFailureReasonErrorKey:type.failureReason,
-                                            NSLocalizedRecoverySuggestionErrorKey:type.recoverySuggestion]
+        var userInfo : [AnyHashable:Any] = [NSLocalizedDescriptionKey:type.errorDescription ?? "",
+                                            NSLocalizedFailureReasonErrorKey:type.failureReason ?? "",
+                                            NSLocalizedRecoverySuggestionErrorKey:type.recoverySuggestion ?? ""]
         if let u = url {
             userInfo["LIRequestURL"] = u
         }
