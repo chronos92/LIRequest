@@ -8,7 +8,7 @@
 
 import Foundation
 
-extension LIRequest {
+public extension LIRequest {
     
     /// Specifica il metodo utilizzato per la chiamata
     ///
