@@ -2,9 +2,14 @@
 
 # LIRequest Framework
 
-## Swift 3.0
+## Swift 3.0 new method
 ```
 github "chronos92/lirequest"
+```
+
+## Swift 3.0 old method
+```
+github "chronos92/lirequest" "old_swift3"
 ```
 
 ## Swift 2.3
