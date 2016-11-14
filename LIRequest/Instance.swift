@@ -10,6 +10,8 @@ import Foundation
 
 public class LIRequestInstance : NSObject {
     
+    public var testEnable : Bool = false
+    
     /// Indica l' Accept di default impostato nell'inizializzazione dell'oggetto LIRequest
     public var accept : LIRequest.Accept = LIRequest.Accept.applicationJson
     
@@ -43,9 +45,15 @@ public class LIRequestInstance : NSObject {
     /// Contiene l'oggetto responsabile della validazione della chiamata per il controllo del parametro success nel json ricevuto
     /// Può essere sovvrascritto per ogni chiamata
     public var validationResponseObject : ValidationResponseObject = { response in
-        guard let object = response as? [AnyHashable:Any] else { return false }
-        guard let success = object["success"] as? Bool else { return false }
-        return success
+        guard let object = response else { return false }
+        var value : Bool = false
+        guard let key = object["success"] else { return false }
+        if let int = key as? Int {
+            value = int == 0 ? false : true
+        } else if let bool = key as? Bool {
+            value = bool
+        }
+        return value
     }
     
     /// Contiente l'oggetto richiamato durante il download o l'upload dei dati.
@@ -85,6 +93,7 @@ public class LIRequestInstance : NSObject {
         })
         requestForTask[task.taskIdentifier] = request
         listOfCall.append(task)
+        LIPrint("Aggiunta nuova richiesta")
         task.resume()
     }
     

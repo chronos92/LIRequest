@@ -8,6 +8,12 @@
 
 import Foundation
 
+internal func LIPrint(_ text : String) {
+    if LIRequestInstance.shared.testEnable {
+        debugPrint(String(format: "[LIRequest] %@", text))
+    }
+}
+
 public extension LIRequest {
     
     /// Specifica il metodo utilizzato per la chiamata

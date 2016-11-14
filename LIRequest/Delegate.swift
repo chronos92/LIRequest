@@ -20,6 +20,7 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
     /// - parameter totalBytesWritten:         totale dei bytes ricevuti e scritti
     /// - parameter totalBytesExpectedToWrite: totale dei bytes che ci si aspetta di ricevere
     public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
+        LIPrint("Download dati in corso...")
         guard totalBytesExpectedToWrite != NSURLSessionTransferSizeUnknown else { return }
         if let request = LIRequestInstance.shared.requestForTask[downloadTask.taskIdentifier] {
             if let progressObject = request.progressObject {
@@ -39,25 +40,31 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
     /// - parameter downloadTask: task che ha effettuato la chiamata ed il download
     /// - parameter location:     url che specifica dove i dati sono stati salvati temporaneamente
     public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
+        LIPrint("Download dei dati completato")
         LIRequestInstance.shared.hideNetworkActivity()
         guard let request = LIRequestInstance.shared.requestForTask[downloadTask.taskIdentifier] else { return }
         guard let data = try? Data(contentsOf: location) else {
+            LIPrint("Non sono presenti dati nella risposta")
             self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .noDataInResponse))
             return
         }
         switch request.accept {
         case LIRequest.Accept.applicationJson:
             guard let objectJSON = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers) else {
+                LIPrint("Oggetto della risposta corrotto")
                 self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .incorrectResponseContentType,
                                                                                                   withUrlString:downloadTask.currentRequest?.url?.absoluteString))
                 return
             }
             guard let object = objectJSON as? [AnyHashable:Any] else {
+                LIPrint("Oggetto non correttamente formattato")
                 self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .incorrectResponseContentType,
                                                                                                   withUrlString:downloadTask.currentRequest?.url?.absoluteString))
                 return
             }
+
             guard request.validationResponseObject(object) else {
+                LIPrint("Validazione fallita")
                 self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .errorInResponse,
                                                                                                   withUrlString: downloadTask.currentRequest?.url?.absoluteString,
                                                                                                   withErrorString:object["message"] as? String))
@@ -82,11 +89,13 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
             fallthrough
         case LIRequest.Accept.textCsv:
             if let responseString = String(data: data, encoding: request.encoding) {
+                LIPrint("Contenuto nella risposta corretto")
                 if !request.alreadyCalled {
                     request.callSuccess(withObject: responseString, andMessage: nil)
                     request.isCompleteObject?(request,true)
                 }
             } else {
+                LIPrint("Oggetto della risposta corrotto")
                 self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .incorrectResponseContentType,
                                                                                                   withUrlString: downloadTask.currentRequest?.url?.absoluteString))
                 return
@@ -99,7 +108,6 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
         }
     }
     
-    
     /// Viene chiamato durante la fase di upload dei dati.
     /// In questo metodo viene chiamato l'oggetto progress associato alla chiamata.
     ///
@@ -109,6 +117,7 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
     /// - parameter totalBytesSent:           numero di bytes inviati nella chiamata
     /// - parameter totalBytesExpectedToSend: numero di bytes che ci si aspetta di inviare
     public func urlSession(_ session: URLSession, task: URLSessionTask, didSendBodyData bytesSent: Int64, totalBytesSent: Int64, totalBytesExpectedToSend: Int64) {
+        LIPrint("Invio dati in corso...")
         if let request = LIRequestInstance.shared.requestForTask[task.taskIdentifier] {
             if let progressObject = request.progressObject {
                 if request.progress == nil {
@@ -131,11 +140,13 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
         LIRequestInstance.shared.hideNetworkActivity()
         guard let request = LIRequestInstance.shared.requestForTask[task.taskIdentifier] else { return }
         if let currentError = error {
+            LIPrint("Errore nella chiamata")
             if !request.alreadyCalled {
                 request.callFailure(withObject: nil, andError: currentError)
                 request.isCompleteObject?(request,false)
             }
         } else {
+            LIPrint("Chiamata avvenuta con successo")
             if !request.alreadyCalled {
                 request.callSuccess(withObject: nil, andMessage: nil)
                 request.isCompleteObject?(request,true)

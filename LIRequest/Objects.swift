@@ -22,7 +22,7 @@ public typealias SuccessObject = ((_ object:Any?,_ message:String?)->Void)
 
 /// - parameter response : oggetto ricevuto dal server
 /// - returns : true se l'oggetto rispetta la validazione altrimenti false
-public typealias ValidationResponseObject = ((_ response:Any?)->Bool)
+public typealias ValidationResponseObject = ((_ response:[AnyHashable:Any]?)->Bool)
 
 /// - parameter progress : oggetto Progress contenente le informazione del progresso
 public typealias ProgressObject = ((_ progress : Progress)->Void)

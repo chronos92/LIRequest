@@ -21,10 +21,10 @@ public class LIRequest : Equatable {
     }
     
     /// Indica la chiave Accept nell'header della richiesta
-    public var accept : Accept
+    public var accept : LIRequest.Accept
     
     /// Indica il Content-Type di default impostato nell'inizializzazione dell'oggetto LIRequest
-    public var contentType : ContentType
+    public var contentType : LIRequest.ContentType
     
     /// Indica il valore della chiave di default contenente l'oggetto utile nella risposta
     public var callbackName : String
@@ -79,6 +79,7 @@ public class LIRequest : Equatable {
     /// - parameter url:    indica l'url a cui sarà indirizzata la chiamata
     /// - parameter params: specifica i parametri da passare al server durante la chiamata
     public func get(toURL url : URL, withParams params : [String:Any]?) {
+        LIPrint("Creo nuova chiamata get")
         self.action(withMethod: .get, toUrl: url, withParams: params)
     }
     
@@ -87,6 +88,7 @@ public class LIRequest : Equatable {
     /// - parameter url:    indica l'url a cui sarà indirizzata la chiamata
     /// - parameter params: specifica i parametri da passare al server durante la chiamata
     public func post(toURL url : URL, withParams params : [String:Any]?) {
+        LIPrint("Creo nuova chiamata post")
         self.action(withMethod: .post, toUrl: url, withParams: params)
     }
     
@@ -99,6 +101,7 @@ public class LIRequest : Equatable {
                     query = try obj(par)
                 } catch {
                     query = ""
+                    LIPrint("Errore nella codifica dei parametri")
                     let error = LIRequestError(forType: .incorrectParametersToSend,withParameters:par)
                     self.failureObjects.forEach({$0(nil,error)})
                 }
@@ -106,10 +109,6 @@ public class LIRequest : Equatable {
                 query = queryString(fromParameter: par)
             }
             request.httpBody = query.data(using: self.encoding)
-        }
-        if let body = request.httpBody {
-            let string = String(data: body, encoding: self.encoding)
-            debugPrint(string ?? "[LIRequest] empty body")
         }
         DispatchQueue.main.async {
             UIApplication.shared.isNetworkActivityIndicatorVisible = self.showNetworkActivityIndicator
@@ -284,43 +283,40 @@ public class LIRequest : Equatable {
 //    
 //    return escaped;
 //    }
+    //        NSArray * AFQueryStringPairsFromKeyAndValue(NSString *key, id value) {
+    //            NSMutableArray *mutableQueryStringComponents = [NSMutableArray array];
+    //
+    //            NSSortDescriptor *sortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"description" ascending:YES selector:@selector(compare:)];
+    //
+    //            if ([value isKindOfClass:[NSDictionary class]]) {
+    //                NSDictionary *dictionary = value;
+    //                // Sort dictionary keys to ensure consistent ordering in query string, which is important when deserializing potentially ambiguous sequences, such as an array of dictionaries
+    //                for (id nestedKey in [dictionary.allKeys sortedArrayUsingDescriptors:@[ sortDescriptor ]]) {
+    //                    id nestedValue = dictionary[nestedKey];
+    //                    if (nestedValue) {
+    //                        [mutableQueryStringComponents addObjectsFromArray:AFQueryStringPairsFromKeyAndValue((key ? [NSString stringWithFormat:@"%@[%@]", key, nestedKey] : nestedKey), nestedValue)];
+    //                    }
+    //                }
+    //            } else if ([value isKindOfClass:[NSArray class]]) {
+    //                NSArray *array = value;
+    //                for (id nestedValue in array) {
+    //                    [mutableQueryStringComponents addObjectsFromArray:AFQueryStringPairsFromKeyAndValue([NSString stringWithFormat:@"%@[]", key], nestedValue)];
+    //                }
+    //            } else if ([value isKindOfClass:[NSSet class]]) {
+    //                NSSet *set = value;
+    //                for (id obj in [set sortedArrayUsingDescriptors:@[ sortDescriptor ]]) {
+    //                    [mutableQueryStringComponents addObjectsFromArray:AFQueryStringPairsFromKeyAndValue(key, obj)];
+    //                }
+    //            } else {
+    //                [mutableQueryStringComponents addObject:[[AFQueryStringPair alloc] initWithField:key value:value]];
+    //            }
+    //            
+    //            return mutableQueryStringComponents;
+    //        }
+
     
     public func post(toURL url : URL, withImage image : UIImage, andFileName fileName : String, andParamImageName paramImageName : String?, andParams params : [String:Any]?) {
-        
-
-//        NSArray * AFQueryStringPairsFromKeyAndValue(NSString *key, id value) {
-//            NSMutableArray *mutableQueryStringComponents = [NSMutableArray array];
-//            
-//            NSSortDescriptor *sortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"description" ascending:YES selector:@selector(compare:)];
-//            
-//            if ([value isKindOfClass:[NSDictionary class]]) {
-//                NSDictionary *dictionary = value;
-//                // Sort dictionary keys to ensure consistent ordering in query string, which is important when deserializing potentially ambiguous sequences, such as an array of dictionaries
-//                for (id nestedKey in [dictionary.allKeys sortedArrayUsingDescriptors:@[ sortDescriptor ]]) {
-//                    id nestedValue = dictionary[nestedKey];
-//                    if (nestedValue) {
-//                        [mutableQueryStringComponents addObjectsFromArray:AFQueryStringPairsFromKeyAndValue((key ? [NSString stringWithFormat:@"%@[%@]", key, nestedKey] : nestedKey), nestedValue)];
-//                    }
-//                }
-//            } else if ([value isKindOfClass:[NSArray class]]) {
-//                NSArray *array = value;
-//                for (id nestedValue in array) {
-//                    [mutableQueryStringComponents addObjectsFromArray:AFQueryStringPairsFromKeyAndValue([NSString stringWithFormat:@"%@[]", key], nestedValue)];
-//                }
-//            } else if ([value isKindOfClass:[NSSet class]]) {
-//                NSSet *set = value;
-//                for (id obj in [set sortedArrayUsingDescriptors:@[ sortDescriptor ]]) {
-//                    [mutableQueryStringComponents addObjectsFromArray:AFQueryStringPairsFromKeyAndValue(key, obj)];
-//                }
-//            } else {
-//                [mutableQueryStringComponents addObject:[[AFQueryStringPair alloc] initWithField:key value:value]];
-//            }
-//            
-//            return mutableQueryStringComponents;
-//        }
-
-        
-        
+        LIPrint("Creo richiesta per invio immagine")
         var request = self.request(forUrl: url,withMethod: .post)
         request.setValue("multipart/form-data", forHTTPHeaderField: "Content-Type")
         guard let imageData = UIImagePNGRepresentation(image) else {
@@ -377,8 +373,10 @@ public class LIRequest : Equatable {
     /// - parameter override: se true sovrascrive il blocco, altrimenti esegue prima quello delle configurazioni e poi quello passato
     public func setIsComplete(overrideDefault override : Bool=false, withObject object : IsCompleteObject?) {
         if override {
+            LIPrint("Sovrascrivo blocco complete")
             self.isCompleteObject = object
         } else {
+            LIPrint("Aggiungo blocco complete")
             self.setIsComplete(overrideDefault: true, withObject: { (request, success) in
                 LIRequestInstance.shared.isCompleteObject?(request,success)
                 object?(request,success)
@@ -392,6 +390,7 @@ public class LIRequest : Equatable {
     /// - parameter override: se true sovrascrive il blocco, altrimenti esegue prima quello delle configurazioni e poi quello passato
     public func setFailure( overrideDefault override : Bool=false,withObject object : @escaping FailureObject) {
         if override {
+            LIPrint("Sovrascrivo blocco failure")
             self.failureObjects = [object]
         } else {
             self.addFailure(withObject: object)
@@ -402,6 +401,7 @@ public class LIRequest : Equatable {
     ///
     /// - parameter object: blocco del failure
     public func addFailure(withObject object : @escaping FailureObject) {
+        LIPrint("Aggiungo blocco failure")
         self.failureObjects.append(object)
     }
     
@@ -411,6 +411,7 @@ public class LIRequest : Equatable {
     /// - parameter override: se true sovrascrive il blocco, altrimenti esegue prima quello delle configurazioni e poi quello passato
     public func setSuccess( overrideDefault override : Bool=false,withObject object : @escaping SuccessObject) {
         if override {
+            LIPrint("Sovrascrivo blocco success")
             self.successObjects = [object]
         } else {
             self.addSuccess(withObject: object)
@@ -421,6 +422,7 @@ public class LIRequest : Equatable {
     ///
     /// - parameter object: blocco di success
     public func addSuccess(withObject object : @escaping SuccessObject) {
+        LIPrint("Aggiungo blocco success")
         self.successObjects.append(object)
     }
     
@@ -430,8 +432,10 @@ public class LIRequest : Equatable {
     /// - parameter override: se true sovrascrive il blocco, altrimenti esegue prima quello delle configurazioni e poi quello passato
     public func setProgress( overrideDefault override : Bool=false, withObject object : ProgressObject?) {
         if override {
+            LIPrint("Sovrascrivo blocco progress")
             self.progressObject = object
         } else {
+            LIPrint("Aggiungo blocco progress")
             self.setProgress(overrideDefault: true, withObject: { (progress) in
                 LIRequestInstance.shared.progressObject?(progress)
                 object?(progress)
@@ -445,8 +449,10 @@ public class LIRequest : Equatable {
     /// - parameter override: se true sovrascrive il blocco, altrimenti esegue prima quello delle configurazioni e poi quello passato
     public func setValidation(overrideDefault override : Bool=false,withObject object : @escaping ValidationResponseObject) {
         if override {
+            LIPrint("Sovrascrivo blocco validazione")
             self.validationResponseObject = object
         } else {
+            LIPrint("Aggiungo blocco validazione")
             self.setValidation(overrideDefault: true, withObject: { (response) -> Bool in
                 return LIRequestInstance.shared.validationResponseObject(response) && object(response)
             })
@@ -455,18 +461,21 @@ public class LIRequest : Equatable {
     
     /// Rimuove il blocco della validazione dei dati per l'istanza corrente
     public func removeValidation() {
+        LIPrint("Rimuovo  blocco validazione")
         self.setValidation(overrideDefault: true, withObject: { (_) -> Bool in
             return true
         })
     }
     
     internal func callSuccess(withObject object : Any?, andMessage message : String?) {
+        LIPrint("Chiamo blocco success")
         self.successObjects.forEach { (success) in
             success(object,message)
         }
     }
     
     internal func callFailure(withObject object:Any?,andError error : Error) {
+        LIPrint("Chiamo blocco failure")
         self.failureObjects.forEach { (failure) in
             failure(object,error)
         }
