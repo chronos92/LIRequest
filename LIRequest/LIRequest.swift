@@ -96,12 +96,12 @@ public class LIRequest : Equatable {
     internal func action(withMethod method:Method, toUrl url : URL, withParams params : [String:Any]?) {
         var request = self.request(forUrl: url,withMethod: method)
         if let par = params {
-            var query : String
+            var query : [URLQueryItem]
             if let obj = self.objectConversion {
                 do {
                     query = try obj(par)
                 } catch {
-                    query = ""
+                    query = []
                     LIPrint("Errore nella codifica dei parametri")
                     let error = LIRequestError(forType: .incorrectParametersToSend,withParameters:par)
                     self.failureObjects.forEach({$0(nil,error)})
@@ -109,7 +109,12 @@ public class LIRequest : Equatable {
             } else {
                 query = queryString(fromParameter: par)
             }
-            request.httpBody = query.data(using: self.encoding)
+            switch method {
+            case .get:
+                insertQueryForGet(query, inRequest: &request)
+            case .post:
+                insertQueryForPost(query, inRequest: &request)
+            }
         }
         DispatchQueue.main.async {
             UIApplication.shared.isNetworkActivityIndicatorVisible = self.showNetworkActivityIndicator
@@ -173,30 +178,54 @@ public class LIRequest : Equatable {
         
     }
     
-    private func queryString(fromParameter params : [String:Any]) -> String {
-        var array : [String] = []
-        for (key,value) in params {
-            array.append(String(format:"%@=%@",key,description(value)))
+    private func insertQueryForPost(_ query : [URLQueryItem],inRequest request : inout URLRequest) {
+        request.httpBody = convertItemsToString(query).data(using: self.encoding)
+    }
+    
+    private func convertItemsToString(_ items : [URLQueryItem]) -> String {
+        var string = ""
+        for (pos,item) in items.enumerated() {
+            if pos != 0 {
+                string.append("&")
+            }
+            string += "\(item.name)=\(item.value ?? "")"
         }
-        
-        return array.joined(separator: "&")
+        return string
+    }
+    
+    private func insertQueryForGet(_ query : [URLQueryItem], inRequest request : inout URLRequest) {
+        if var components = URLComponents(string: request.url!.absoluteString) {
+            var items = components.queryItems ?? []
+            items.append(contentsOf: query)
+            components.queryItems = items
+            let url = components.url
+            request.url = url
+            return
+        }
+        request.url = URL(string: "\(request.url!)?\(query)")
+    }
+    
+    private func queryString(fromParameter params : [String:Any]) -> [URLQueryItem] {
+        var array : [URLQueryItem] = []
+        for (key,value) in params {
+            array.append(URLQueryItem(name: percentEncoding(forItem: key), value: percentEncoding(forItem: value)))
+        }
+        return array
+    }
+    
+    private func percentEncoding(forItem item : Any) -> String {
+        let allowedCharacters = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~")
+
+        let val = description(item).addingPercentEncoding(withAllowedCharacters: allowedCharacters)
+        assert(val != nil)
+        return val!
     }
     
     private func description(_ item : Any) -> String {
         if let val = item as? String {
             return val.description
-        } else
-        if let val = item as? Int {
+        } else if let val = item as? NSNumber {
             return val.description
-        } else
-        if let val = item as? Double {
-              return val.description
-        } else
-        if let val = item as? Float {
-              return val.description
-        } else
-        if let val = item as? UInt {
-              return val.description
         } else {
             assertionFailure("No valid type in description")
             return ""

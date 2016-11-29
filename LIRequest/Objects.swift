@@ -27,4 +27,4 @@ public typealias ValidationResponseObject = ((_ response:[AnyHashable:Any]?)->Bo
 /// - parameter progress : oggetto Progress contenente le informazione del progresso
 public typealias ProgressObject = ((_ progress : Progress)->Void)
 
-public typealias ObjectConversion = ((_ parameters : [String:Any]) throws ->String)
+public typealias ObjectConversion = ((_ parameters : [String:Any]) throws ->[URLQueryItem])
