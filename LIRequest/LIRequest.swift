@@ -81,6 +81,7 @@ public class LIRequest : Equatable {
     /// - parameter params: specifica i parametri da passare al server durante la chiamata
     public func get(toURL url : URL, withParams params : [String:Any]?) {
         LIPrint("Creo nuova chiamata get")
+        LIPrint(url.absoluteString)
         self.action(withMethod: .get, toUrl: url, withParams: params)
     }
     
@@ -90,6 +91,7 @@ public class LIRequest : Equatable {
     /// - parameter params: specifica i parametri da passare al server durante la chiamata
     public func post(toURL url : URL, withParams params : [String:Any]?) {
         LIPrint("Creo nuova chiamata post")
+        LIPrint(url.absoluteString)
         self.action(withMethod: .post, toUrl: url, withParams: params)
     }
     
