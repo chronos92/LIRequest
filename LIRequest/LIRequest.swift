@@ -380,7 +380,7 @@ public class LIRequest : Equatable {
         var request = URLRequest(url: url)
         request.httpMethod = method.rawValue
         request.addValue(self.contentType.key, forHTTPHeaderField: "Content-Type")
-        request.addValue(self.contentType.key, forHTTPHeaderField: "Accept")
+        request.addValue(self.accept.key, forHTTPHeaderField: "Accept")
         if let ua = userAgent {
             request.addValue(ua, forHTTPHeaderField: "User-Agent")
         }

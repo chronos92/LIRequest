@@ -101,6 +101,7 @@ public class LIRequestInstance : NSObject {
     
     public func configureLabinfoSettings() {
         callbackName = "data"
+        contentType = .applicationFormUrlencoded
         validationResponseObject = { response in
             guard let object = response else { return false }
             var value : Bool = false
