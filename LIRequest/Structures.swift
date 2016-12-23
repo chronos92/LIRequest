@@ -122,6 +122,7 @@ public extension LIRequest {
         static let applicationOctetStream = Accept(key: "application/octet-stream")
         static let applicationFormUrlencoded = Accept(key: "application/x-www-form-urlencoded")
         static let applicationPdf = Accept(key: "application/pdf")
+        static let applicationZip = Accept(key: "application/zip")
         
         static let imageJpeg = Accept(key: "image/jpeg")
         static let imageBmp = Accept(key: "image/bmp")
