@@ -113,19 +113,19 @@ public extension LIRequest {
             key = k
         }
         
-        static let textPlain = Accept(key: "text/plain")
-        static let textHtml = Accept(key: "text/html")
-        static let textCss = Accept(key: "text/css")
-        static let textCsv = Accept(key: "text/csv")
+        public static let textPlain = Accept(key: "text/plain")
+        public static let textHtml = Accept(key: "text/html")
+        public static let textCss = Accept(key: "text/css")
+        public static let textCsv = Accept(key: "text/csv")
         
-        static let applicationJson = Accept(key: "application/json")
-        static let applicationOctetStream = Accept(key: "application/octet-stream")
-        static let applicationFormUrlencoded = Accept(key: "application/x-www-form-urlencoded")
-        static let applicationPdf = Accept(key: "application/pdf")
-        static let applicationZip = Accept(key: "application/zip")
+        public static let applicationJson = Accept(key: "application/json")
+        public static let applicationOctetStream = Accept(key: "application/octet-stream")
+        public static let applicationFormUrlencoded = Accept(key: "application/x-www-form-urlencoded")
+        public static let applicationPdf = Accept(key: "application/pdf")
+        public static let applicationZip = Accept(key: "application/zip")
         
-        static let imageJpeg = Accept(key: "image/jpeg")
-        static let imageBmp = Accept(key: "image/bmp")
-        static let imageGif = Accept(key: "image/gif")
+        public static let imageJpeg = Accept(key: "image/jpeg")
+        public static let imageBmp = Accept(key: "image/bmp")
+        public static let imageGif = Accept(key: "image/gif")
     }
 }
