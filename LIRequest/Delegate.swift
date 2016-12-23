@@ -36,6 +36,15 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
     /// Viene chiamato al termine della fase di download dei dati per qualsiasi chiamata POST e GET
     /// Vengono effettuati i controlli sui dati ricevuti in base al Content-Type impostato nella chiamata, al blocco per la validazione
     ///
+    /// Tipi di dati accettati:
+    ///     --> applicationZip  : object = URL location dei dati,       message = nil
+    ///     --> applicationJson : object = [String:Any] convertita,     message = testo nel json
+    ///     --> textHtml
+    ///     --> textPlain
+    ///     --> textCss
+    ///     --> textCsv         : object = String convertita dai dati,  message = nil
+    ///     --> default         : object = Data convertita dai dati,    message = nil
+    ///
     /// - parameter session:      sessione alla quale è associata la chiamata
     /// - parameter downloadTask: task che ha effettuato la chiamata ed il download
     /// - parameter location:     url che specifica dove i dati sono stati salvati temporaneamente
@@ -49,6 +58,11 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
             return
         }
         switch request.accept {
+        case LIRequest.Accept.applicationZip:
+            if !request.alreadyCalled {
+                request.callSuccess(withObject: location, andMessage: nil)
+                request.isCompleteObject?(request,true)
+            }
         case LIRequest.Accept.applicationJson:
             guard let objectJSON = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers) else {
                 LIPrint("Oggetto della risposta corrotto")
@@ -62,7 +76,6 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
                                                                                                   withUrlString:downloadTask.currentRequest?.url?.absoluteString))
                 return
             }
-
             guard request.validationResponseObject(object) else {
                 LIPrint("Validazione fallita")
                 self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .errorInResponse,
