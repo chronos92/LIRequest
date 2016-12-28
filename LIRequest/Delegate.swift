@@ -37,7 +37,7 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
     /// Vengono effettuati i controlli sui dati ricevuti in base al Content-Type impostato nella chiamata, al blocco per la validazione
     ///
     /// Tipi di dati accettati:
-    ///     --> applicationZip  : object = URL location dei dati,       message = nil
+    ///     --> applicationZip  : object = Data dati contenuti nel file,       message = nil
     ///     --> applicationJson : object = [String:Any] convertita,     message = testo nel json
     ///     --> textHtml
     ///     --> textPlain
@@ -60,7 +60,7 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
         switch request.accept {
         case LIRequest.Accept.applicationZip:
             if !request.alreadyCalled {
-                request.callSuccess(withObject: location, andMessage: nil)
+                request.callSuccess(withObject: data, andMessage: nil)
                 request.isCompleteObject?(request,true)
             }
         case LIRequest.Accept.applicationJson:
