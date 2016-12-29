@@ -20,7 +20,10 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
     /// - parameter totalBytesWritten:         totale dei bytes ricevuti e scritti
     /// - parameter totalBytesExpectedToWrite: totale dei bytes che ci si aspetta di ricevere
     public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
-        LIPrint("Download dati in corso...")
+        LIPrint("Download dati in corso... (Scritti : \(totalBytesWritten.description), Da scrivere : \(totalBytesExpectedToWrite.description)")
+        
+//        <NSProgress: 0x17412f280> : Parent: 0x0 / Fraction completed: 94061.7000 / Completed: 2821851 of 30
+        
         guard totalBytesExpectedToWrite != NSURLSessionTransferSizeUnknown else { return }
         if let request = LIRequestInstance.shared.requestForTask[downloadTask.taskIdentifier] {
             if let progressObject = request.progressObject {
