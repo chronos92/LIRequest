@@ -27,8 +27,8 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
         guard totalBytesExpectedToWrite != NSURLSessionTransferSizeUnknown else { return }
         if let request = LIRequestInstance.shared.requestForTask[downloadTask.taskIdentifier] {
             if let progressObject = request.progressObject {
-                if request.progress == nil {
-                    request.progress = Progress(totalUnitCount: totalBytesExpectedToWrite)
+                if request.progress.totalUnitCount != totalBytesExpectedToWrite {
+                    request.progress.totalUnitCount = totalBytesExpectedToWrite
                 }
                 request.progress.completedUnitCount = totalBytesWritten
                 progressObject(request.progress)

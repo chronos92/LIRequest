@@ -68,7 +68,7 @@ public class LIRequestInstance : NSObject {
     
     func addNewCall(withTash task : URLSessionTask, andRequest request: LIRequest) {
         let success = request.successObjects
-        request.progress = nil
+        request.progress = Progress()
         request.setSuccess(overrideDefault: true, withObject: { (obj, msg) in
             DispatchQueue.main.async {
                 success.forEach({ $0(obj,msg) })
