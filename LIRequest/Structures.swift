@@ -89,6 +89,7 @@ public extension LIRequest {
     /// - application/octet-stream
     /// - application/x-www-form-urlencoded
     /// - application/pdf
+    /// - application/zip
     ///
     /// - image/jpeg
     /// - image/bmp
