@@ -579,12 +579,15 @@ class LIRequestError : NSError {
         }
     }
     
+    var parameters : [AnyHashable:Any]!
+    
     init(forType type : ErrorType,
         withUrlString url:String?=nil,
         withErrorString string : String? = nil,
         withParameters params : [AnyHashable:Any]? = nil) {
         let domain = "net.labinfo.LIRequest"
         let code = type.rawValue
+        self.parameters = params
         var userInfo : [AnyHashable:Any] = [NSLocalizedDescriptionKey:type.errorDescription ?? "",
                                             NSLocalizedFailureReasonErrorKey:type.failureReason ?? "",
                                             NSLocalizedRecoverySuggestionErrorKey:type.recoverySuggestion ?? ""]

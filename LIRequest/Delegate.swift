@@ -83,7 +83,8 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
                 LIPrint("Validazione fallita")
                 self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .errorInResponse,
                                                                                                   withUrlString: downloadTask.currentRequest?.url?.absoluteString,
-                                                                                                  withErrorString:object["message"] as? String))
+                                                                                                  withErrorString:object["message"] as? String,
+                                                                                                  withParameters : object))
                 return
             }
             if request.callbackName.isEmpty {
@@ -158,7 +159,8 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
         if let currentError = error {
             LIPrint("Errore nella chiamata")
             if !request.alreadyCalled {
-                request.callFailure(withObject: nil, andError: currentError)
+                let lierr = (currentError as? LIRequestError)
+                request.callFailure(withObject: lierr?.parameters, andError: currentError)
                 request.isCompleteObject?(request,false)
             }
         } else {
