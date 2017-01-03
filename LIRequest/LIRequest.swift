@@ -122,7 +122,7 @@ public class LIRequest : Equatable {
             UIApplication.shared.isNetworkActivityIndicatorVisible = self.showNetworkActivityIndicator
         }
         let task = LIRequestInstance.shared.session.downloadTask(with: request)
-        LIRequestInstance.shared.addNewCall(withTash: task, andRequest: self)
+        LIRequestInstance.shared.addNewCall(withTask: task, andRequest: self)
         
         //        - (NSURLRequest *)requestBySerializingRequest:(NSURLRequest *)request
         //        withParameters:(id)parameters
@@ -373,7 +373,7 @@ public class LIRequest : Equatable {
         let task = LIRequestInstance.shared.session.uploadTask(with: request, from: imageData)
         
         
-        LIRequestInstance.shared.addNewCall(withTash: task, andRequest: self)
+        LIRequestInstance.shared.addNewCall(withTask: task, andRequest: self)
     }
     
     private func request(forUrl url : URL,withMethod method : Method) -> URLRequest {

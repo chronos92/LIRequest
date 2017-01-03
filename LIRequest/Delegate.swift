@@ -25,7 +25,7 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
 //        <NSProgress: 0x17412f280> : Parent: 0x0 / Fraction completed: 94061.7000 / Completed: 2821851 of 30
         
         guard totalBytesExpectedToWrite != NSURLSessionTransferSizeUnknown else { return }
-        if let request = LIRequestInstance.shared.requestForTask[downloadTask.taskIdentifier] {
+        if let request = LIRequestInstance.shared.requestForTask[downloadTask] {
             if let progressObject = request.progressObject {
                 if request.progress.totalUnitCount != totalBytesExpectedToWrite {
                     request.progress.totalUnitCount = totalBytesExpectedToWrite
@@ -54,7 +54,7 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
     public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
         LIPrint("Download dei dati completato")
         LIRequestInstance.shared.hideNetworkActivity()
-        guard let request = LIRequestInstance.shared.requestForTask[downloadTask.taskIdentifier] else { return }
+        guard let request = LIRequestInstance.shared.requestForTask[downloadTask] else { return }
         guard let data = try? Data(contentsOf: location) else {
             LIPrint("Non sono presenti dati nella risposta")
             self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .noDataInResponse))
@@ -134,7 +134,7 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
     /// - parameter totalBytesExpectedToSend: numero di bytes che ci si aspetta di inviare
     public func urlSession(_ session: URLSession, task: URLSessionTask, didSendBodyData bytesSent: Int64, totalBytesSent: Int64, totalBytesExpectedToSend: Int64) {
         LIPrint("Invio dati in corso...")
-        if let request = LIRequestInstance.shared.requestForTask[task.taskIdentifier] {
+        if let request = LIRequestInstance.shared.requestForTask[task] {
             if let progressObject = request.progressObject {
                 if request.progress == nil {
                     request.progress = Progress(totalUnitCount: totalBytesExpectedToSend)
@@ -154,7 +154,7 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
     /// - parameter error:   eventuale errore ricevuto durante la chiamata
     public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
         LIRequestInstance.shared.hideNetworkActivity()
-        guard let request = LIRequestInstance.shared.requestForTask[task.taskIdentifier] else { return }
+        guard let request = LIRequestInstance.shared.requestForTask[task] else { return }
         if let currentError = error {
             LIPrint("Errore nella chiamata")
             if !request.alreadyCalled {

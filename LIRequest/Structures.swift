@@ -130,3 +130,7 @@ public extension LIRequest {
         public static let imageGif = Accept(key: "image/gif")
     }
 }
+
+func == (lhs:URLSessionTask, rhs:URLSessionTask) -> Bool {
+    return lhs.originalRequest == rhs.originalRequest
+}

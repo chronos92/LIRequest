@@ -58,7 +58,7 @@ public class LIRequestInstance : NSObject {
     public var encoding : String.Encoding = .utf8
     
     internal var listOfCall : [URLSessionTask] = []
-    internal var requestForTask : [Int:LIRequest] = [:]
+    internal var requestForTask : [URLSessionTask:LIRequest] = [:]
     
     private var requestDelegate : LIRequestDelegate = LIRequestDelegate()
     
@@ -66,7 +66,7 @@ public class LIRequestInstance : NSObject {
         return URLSession(configuration: URLSessionConfiguration.default, delegate: requestDelegate, delegateQueue: nil)
     }
     
-    func addNewCall(withTash task : URLSessionTask, andRequest request: LIRequest) {
+    func addNewCall(withTask task : URLSessionTask, andRequest request: LIRequest) {
         let success = request.successObjects
         request.progress = Progress()
         request.setSuccess(overrideDefault: true, withObject: { (obj, msg) in
@@ -82,7 +82,7 @@ public class LIRequestInstance : NSObject {
             }
             request.failureCalled = true
         })
-        requestForTask[task.taskIdentifier] = request
+        requestForTask[task] = request
         listOfCall.append(task)
         LIPrint("Aggiunta nuova richiesta")
         task.resume()
