@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		62FF2BD91E23742D00AB2973 /* ZipLIRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62FF2BD81E23742D00AB2973 /* ZipLIRequest.swift */; };
 		A117768F1DB5062000E1C682 /* Delegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A117768E1DB5062000E1C682 /* Delegate.swift */; };
 		A11776911DB5066700E1C682 /* Objects.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11776901DB5066700E1C682 /* Objects.swift */; };
 		A11776931DB5069200E1C682 /* Instance.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11776921DB5069200E1C682 /* Instance.swift */; };
@@ -17,6 +18,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		62FF2BD81E23742D00AB2973 /* ZipLIRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ZipLIRequest.swift; sourceTree = "<group>"; };
 		A117768E1DB5062000E1C682 /* Delegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Delegate.swift; sourceTree = "<group>"; };
 		A11776901DB5066700E1C682 /* Objects.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Objects.swift; sourceTree = "<group>"; };
 		A11776921DB5069200E1C682 /* Instance.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Instance.swift; sourceTree = "<group>"; };
@@ -65,6 +67,7 @@
 				A117768E1DB5062000E1C682 /* Delegate.swift */,
 				A11776901DB5066700E1C682 /* Objects.swift */,
 				A1B8DD971DB8DD40002B6FB7 /* Structures.swift */,
+				62FF2BD81E23742D00AB2973 /* ZipLIRequest.swift */,
 				A17BE4591C99A1FB002A1673 /* Info.plist */,
 			);
 			path = LIRequest;
@@ -150,6 +153,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				62FF2BD91E23742D00AB2973 /* ZipLIRequest.swift in Sources */,
 				A1B8DD981DB8DD40002B6FB7 /* Structures.swift in Sources */,
 				A11776911DB5066700E1C682 /* Objects.swift in Sources */,
 				A18806051D93304F00B59BB0 /* LIRequest.swift in Sources */,

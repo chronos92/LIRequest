@@ -28,3 +28,5 @@ public typealias ValidationResponseObject = ((_ response:[AnyHashable:Any]?)->Bo
 public typealias ProgressObject = ((_ progress : Progress)->Void)
 
 public typealias ObjectConversion = ((_ parameters : [String:Any]) throws ->[URLQueryItem])
+
+public typealias ZipSuccessObject = ((_ data : Data,_ message:String?)->Void)
