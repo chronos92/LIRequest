@@ -20,7 +20,7 @@ public class LIRequest : Equatable {
         public let username : String
         public let password : String
         
-        init(username u : String, password p : String) {
+        public init(username u : String, password p : String) {
             username = u
             password = p
         }
