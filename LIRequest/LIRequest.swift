@@ -19,6 +19,11 @@ public class LIRequest : Equatable {
     public struct LoginData {
         public let username : String
         public let password : String
+        
+        init(username u : String, password p : String) {
+            username = u
+            password = p
+        }
     }
     
     /// Indica la chiave Accept nell'header della richiesta
