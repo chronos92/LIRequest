@@ -17,8 +17,8 @@ public class LIRequest : Equatable {
     
     let uniqueIdentifier : String = NSUUID().uuidString
     public struct LoginData {
-        let username : String
-        let password : String
+        public let username : String
+        public let password : String
     }
     
     /// Indica la chiave Accept nell'header della richiesta
