@@ -72,7 +72,7 @@ public class LIZipRequest : LIRequest {
 public class LIJSONRequest : LIRequest {
     internal var jsonSuccess : JSONSuccessObject?
     
-    override init() {
+    public override init() {
         super.init()
         self.accept = .applicationJson
     }
