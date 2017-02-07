@@ -13,7 +13,7 @@ public class LIImageRequest : LIRequest {
     
     internal var imageSuccess : ImageSuccessObject?
     
-    override init() {
+    public override init() {
         super.init()
         self.accept = .imageJpeg
     }
@@ -44,7 +44,7 @@ public class LIZipRequest : LIRequest {
     
     internal var zipSuccess : ZipSuccessObject?
     
-    override init() {
+    public override init() {
         super.init()
         self.accept = .applicationZip
     }
