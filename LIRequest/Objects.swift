@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import UIKit
 
 /// - parameter request : oggetto che ha effettuato la richiesta
 /// - parameter state: definisce se la richiesta è andata a buon fine oppure è fallita
@@ -30,3 +31,7 @@ public typealias ProgressObject = ((_ progress : Progress)->Void)
 public typealias ObjectConversion = ((_ parameters : [String:Any]) throws ->[URLQueryItem])
 
 public typealias ZipSuccessObject = ((_ data : Data,_ message:String?)->Void)
+
+public typealias JSONSuccessObject = ((_ jsonObject : [AnyHashable:Any],_ message : String?)->Void)
+
+public typealias ImageSuccessObject = ((_ image : UIImage?,_ message : String?)->Void)
