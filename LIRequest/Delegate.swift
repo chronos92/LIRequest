@@ -20,7 +20,7 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
     /// - parameter totalBytesWritten:         totale dei bytes ricevuti e scritti
     /// - parameter totalBytesExpectedToWrite: totale dei bytes che ci si aspetta di ricevere
     public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
-        LIPrint("Download dati in corso... (Scritti : \(totalBytesWritten.description), Da scrivere : \(totalBytesExpectedToWrite.description)")
+        LIPrint("Download dati in corso... (Scritti : \(totalBytesWritten.description), Da scrivere : \(totalBytesExpectedToWrite.description))")
         
 //        <NSProgress: 0x17412f280> : Parent: 0x0 / Fraction completed: 94061.7000 / Completed: 2821851 of 30
         
@@ -64,10 +64,10 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
         case LIRequest.Accept.applicationZip:
             if !request.alreadyCalled {
                 let tmp = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
-                let file = tmp.appendingPathComponent(Date().timeIntervalSince1970.description)
+                let file = tmp.appendingPathComponent(Date().timeIntervalSince1970.description).appendingPathExtension("zip")
                 do {
                     try FileManager.default.moveItem(at: location, to: file)
-                    request.callSuccess(withObject: data, andMessage: nil)
+                    request.callSuccess(withObject: file, andMessage: nil)
                     request.isCompleteObject?(request,true)
                 }
                 catch {
