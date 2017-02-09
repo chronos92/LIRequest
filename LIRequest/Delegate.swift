@@ -63,8 +63,18 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
         switch request.accept {
         case LIRequest.Accept.applicationZip:
             if !request.alreadyCalled {
-                request.callSuccess(withObject: data, andMessage: nil)
-                request.isCompleteObject?(request,true)
+                let tmp = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
+                let file = tmp.appendingPathComponent(Date().timeIntervalSince1970.description)
+                do {
+                    try FileManager.default.moveItem(at: location, to: file)
+                    request.callSuccess(withObject: data, andMessage: nil)
+                    request.isCompleteObject?(request,true)
+                }
+                catch {
+                    self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .errorInResponse,
+                                                                                                      withUrlString: downloadTask.currentRequest?.url?.absoluteString,
+                                                                                                      withErrorString: error)
+                }
             }
         case LIRequest.Accept.applicationJson:
             guard let objectJSON = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers) else {
