@@ -73,7 +73,7 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
                 catch {
                     self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .errorInResponse,
                                                                                                       withUrlString: downloadTask.currentRequest?.url?.absoluteString,
-                                                                                                      withErrorString: error)
+                                                                                                      withErrorString: error.localizedDescription))
                 }
             }
         case LIRequest.Accept.applicationJson:
