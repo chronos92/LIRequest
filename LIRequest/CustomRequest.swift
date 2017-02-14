@@ -88,7 +88,7 @@ public class LIJSONRequest : LIRequest {
             json(jsonObject, message)
         }
         else {
-            LIPrint("Success zip block not set, call success block")
+            LIPrint("Success json block not set, call success block")
             super.callSuccess(withObject: object, andMessage: message)
         }
     }
