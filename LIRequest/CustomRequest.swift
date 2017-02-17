@@ -55,9 +55,11 @@ public class LIZipRequest : LIRequest {
     }
     
     override func callSuccess(withObject object: Any?, andMessage message: String?) {
-        if let zip = self.zipSuccess, let dataObject = object as? URL {
+        let dataObject = object as? URL
+        if let zip = self.zipSuccess, dataObject != nil {
             LIPrint("Call success zip block")
-            zip(dataObject, message)
+            self.successCalled = true
+            zip(dataObject!, message)
         } else {
             LIPrint("Success zip block not set, call success block")
             super.callSuccess(withObject: object, andMessage: message)
