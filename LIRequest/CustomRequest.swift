@@ -43,10 +43,15 @@ public class LIImageRequest : LIRequest {
 public class LIZipRequest : LIRequest {
     
     internal var zipSuccess : ZipSuccessObject?
+    internal var validationObject : ZipValidationResponseObject?
     
     public override init() {
         super.init()
         self.accept = .applicationZip
+    }
+    
+    public func setValidation(overrideDefault override: Bool, withObject object: @escaping ZipValidationResponseObject) {
+        self.validationObject = object
     }
     
     public func setZipSuccess(withObject object : @escaping ZipSuccessObject) {
@@ -65,6 +70,9 @@ public class LIZipRequest : LIRequest {
             super.callSuccess(withObject: object, andMessage: message)
         }
     }
+    
+    @available(*,unavailable,renamed: "setValidation(overrideDefault:withObject:)")
+    public override func setValidation(overrideDefault override: Bool, withObject object: @escaping ValidationResponseObject) {}
     @available(*,unavailable,renamed: "setZipSuccess(withObject:)")
     public override func setSuccess(overrideDefault override: Bool, withObject object: @escaping SuccessObject) {}
     @available(*,unavailable,renamed: "setZipSuccess(withObject:)")

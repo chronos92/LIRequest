@@ -63,6 +63,20 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
         switch request.accept {
         case LIRequest.Accept.applicationZip:
             if !request.alreadyCalled {
+                var validation : (validate : Bool,message : String?) = (true,nil)
+                if let zipRequest = request as? LIZipRequest {
+                    if let data = try? Data(contentsOf: location) {
+                        validation = zipRequest.validationObject?(data) ?? (true,nil)
+                    }
+                }
+                guard validation.validate else {
+                    LIPrint("Validazione fallita")
+                    self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .errorInResponse,
+                                                                                                      withUrlString: downloadTask.currentRequest?.url?.absoluteString,
+                                                                                                      withErrorString:validation.message,
+                                                                                                      withParameters : nil))
+                    return
+                }
                 let tmp = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
                 let file = tmp.appendingPathComponent(Date().timeIntervalSince1970.description).appendingPathExtension("zip")
                 do {

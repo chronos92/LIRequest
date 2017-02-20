@@ -32,6 +32,8 @@ public typealias ObjectConversion = ((_ parameters : [String:Any]) throws ->[URL
 
 public typealias ZipSuccessObject = ((_ data : URL,_ message:String?)->Void)
 
+public typealias ZipValidationResponseObject = ((_ response : Any?)->(validate:Bool,message:String?))
+
 public typealias JSONSuccessObject = ((_ jsonObject : [AnyHashable:Any],_ message : String?)->Void)
 
 public typealias ImageSuccessObject = ((_ image : UIImage?,_ message : String?)->Void)
