@@ -204,7 +204,7 @@ public class LIRequest : Equatable {
         let requestSerializer = AFHTTPRequestSerializer()
         if params != nil {
             if let data = try? JSONSerialization.data(withJSONObject: params!, options: JSONSerialization.WritingOptions.prettyPrinted) {
-                debugPrint(String(data: data, encoding: String.Encoding.utf8))
+                debugPrint(String(data: data, encoding: String.Encoding.utf8) ?? "")
             }
         }
         if requestWithLogin {
@@ -298,7 +298,7 @@ public class LIRequest : Equatable {
     }
     
     public func post(to urlString : String, withImage image : UIImage, andFileName fileName : String, andParams params : [String:Any]?, andParamsName paramsName : String?, uploadProgressBlock block : ((_ percentage:Progress)-> Void)?) -> URLSessionDataTask? {
-        return post(to: urlString, withData: UIImageJPEGRepresentation(image, 1), withFileName: fileName, andParams: params, andParamsName: paramsName, uploadProgressBlock: block)
+        return post(to: urlString, withData: UIImageJPEGRepresentation(image, 1)!, withFileName: fileName, andParams: params, andParamsName: paramsName, uploadProgressBlock: block)
     }
     
     public func post(to urlString : String, withData data : Data, withFileName fileName : String, andParams params : [String:Any]?, andParamsName paramsName : String?, uploadProgressBlock block : ((_ progress : Progress)->Void)?) -> URLSessionDataTask? {
