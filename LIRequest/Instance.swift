@@ -82,6 +82,14 @@ public class LIRequestInstance : NSObject {
             }
             request.failureCalled = true
         })
+        let complete = request.isCompleteObject
+        let removingCode : IsCompleteObject = {(_, _) in
+            self.remove(task: task)
+        }
+        request.setIsComplete(overrideDefault: true) { (request, completed) in
+            complete?(request,(complete != nil))
+            removingCode(request, completed)
+        }
         requestForTask[task] = request
         listOfCall.append(task)
         LIPrint("Aggiunta nuova richiesta")
@@ -115,5 +123,18 @@ public class LIRequestInstance : NSObject {
             return value
         }
 
+    }
+    
+    public func stopAllTask() {
+        for task in listOfCall {
+            task.cancel()
+        }
+    }
+    
+    internal func remove(task : URLSessionTask) {
+        if let index = listOfCall.index(of: task) {
+            listOfCall.remove(at: index)
+            requestForTask.removeValue(forKey: task)
+        }
     }
 }
