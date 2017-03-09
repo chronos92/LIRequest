@@ -523,7 +523,7 @@ func LILocalizedString(_ key : String,comment : String) -> String {
     return NSLocalizedString(key, tableName: "LIRequestLocalizable", comment: comment)
 }
 
-class LIRequestError : NSError {
+public class LIRequestError : NSError {
 
     /// Definisce il tipo di errore possibile in LIRequest.
     /// Per ogni tipo di errore definisce la descrizione dell'errore, il motivo per cui si è verificato ed un eventuale metodo di risoluzione
@@ -534,22 +534,24 @@ class LIRequestError : NSError {
     /// - incorrectResponseContentType
     /// - incorrectParametersToSend
     /// - incorrectImageToSend
-    internal enum ErrorType : Int, LocalizedError {
+    /// - aborted
+    public enum ErrorType : Int, LocalizedError {
         case invalidUrl = 400
         case errorInResponse = 406
         case noDataInResponse = 407
         case incorrectResponseContentType = 500
         case incorrectParametersToSend = 600
         case incorrectImageToSend = -145
+        case aborted = -999
         
-        internal var errorDescription: String? {
+        public var errorDescription: String? {
             switch self {
             default:
                 return NSLocalizedString("ErrorCall", comment: "")
             }
         }
         
-        var failureReason: String? {
+        public var failureReason: String? {
             switch self {
             case .invalidUrl:
                 return LILocalizedString("ErrorInvalidUrl", comment: "")
@@ -563,10 +565,12 @@ class LIRequestError : NSError {
                 return LILocalizedString("ErrorIncorrectParametersToSend", comment: "")
             case .incorrectImageToSend:
                 return LILocalizedString("ErrorIncorrectImageToSend", comment: "")
+            case .aborted:
+                return LILocalizedString("ErrorAbortedCall", comment: "")
             }
         }
         
-        internal var recoverySuggestion: String? {
+        public var recoverySuggestion: String? {
             switch self {
             case .invalidUrl:
                 return LILocalizedString("ErrorInvalidUrlSuggestion", comment: "")
@@ -577,6 +581,8 @@ class LIRequestError : NSError {
             case .noDataInResponse:
                 fallthrough
             case .incorrectResponseContentType:
+                fallthrough
+            case .aborted:
                 fallthrough
             case .errorInResponse:
                 return nil
@@ -608,7 +614,7 @@ class LIRequestError : NSError {
         super.init(domain: domain, code: code, userInfo: userInfo)
     }
     
-    required init?(coder aDecoder: NSCoder) {
+    required public init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
     }
 }
