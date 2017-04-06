@@ -131,6 +131,17 @@ public class LIRequest : Equatable {
     }
     
     private func insertQueryForPost(_ query : [URLQueryItem],inRequest request : inout URLRequest) {
+        if let url = request.url {
+            if var components = URLComponents(url: url, resolvingAgainstBaseURL: false) {
+                var queryItems = components.queryItems ?? []
+                queryItems.append(contentsOf: query)
+                components.queryItems = queryItems
+                if let queryString = components.percentEncodedQuery {
+                    request.httpBody = queryString.data(using: self.encoding)
+                    return
+                }
+            }
+        }
         request.httpBody = convertItemsToString(query).data(using: self.encoding)
     }
     
@@ -146,15 +157,16 @@ public class LIRequest : Equatable {
     }
     
     private func insertQueryForGet(_ query : [URLQueryItem], inRequest request : inout URLRequest) {
-        if var components = URLComponents(string: request.url!.absoluteString) {
-            var items = components.queryItems ?? []
-            items.append(contentsOf: query)
-            components.queryItems = items
-            let url = components.url
-            request.url = url
-            return
+        if let url = request.url {
+            if var components = URLComponents(url: url, resolvingAgainstBaseURL: false) {
+                var queryItems = components.queryItems ?? []
+                queryItems.append(contentsOf: query)
+                components.queryItems = queryItems
+                request.url = url
+                return
+            }
         }
-        request.url = URL(string: "\(request.url!)?\(query)")
+        request.url = URL(string: "\(request.url!)?\(convertItemsToString(query))")
     }
     
     private func queryString(fromParameter params : [String:Any]) -> [URLQueryItem] {
