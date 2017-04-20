@@ -52,6 +52,124 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
     /// - parameter downloadTask: task che ha effettuato la chiamata ed il download
     /// - parameter location:     url che specifica dove i dati sono stati salvati temporaneamente
     public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
+        
+        func completeApplicationDownload(forRequest request : LIRequest, with fileExtension : String) -> Bool {
+            if !request.alreadyCalled {
+                var validation : (validate : Bool,message : String?) = (true,nil)
+                if let zipRequest = request as? LIZipRequest {
+                    if let data = try? Data(contentsOf: location) {
+                        validation = zipRequest.validationObject?(data) ?? (true,nil)
+                    }
+                }
+                else if let downloadRequest = request as? LIDownloadRequest {
+                    if let data = try? Data(contentsOf: location) {
+                        validation = downloadRequest.validationObject?(data) ?? (true,nil)
+                    }
+                }
+                guard validation.validate else {
+                    LIPrint("Validazione fallita")
+                    self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .errorInResponse,withUrlString: downloadTask.currentRequest?.url?.absoluteString,withErrorString:validation.message,withParameters : nil))
+                    return false
+                }
+                let tmp = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
+                let file = tmp.appendingPathComponent(Date().timeIntervalSince1970.description).appendingPathExtension(fileExtension)
+                do {
+                    try FileManager.default.moveItem(at: location, to: file)
+                    if let mime = downloadTask.response?.mimeType {
+                        request.realContentType = MimeType(mimeText: mime)
+                    }
+                    
+                    request.callSuccess(withObject: file, response: downloadTask.response, andMessage: nil)
+                    request.isCompleteObject?(request,true)
+                }
+                catch {
+                    self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .errorInResponse,
+                                                                                                      withUrlString: downloadTask.currentRequest?.url?.absoluteString,
+                                                                                                      withErrorString: error.localizedDescription))
+                    return false
+                }
+            }
+            return true
+        }
+        
+        func completeApplicationJson(forRequest request : LIRequest, with data : Data) -> Bool {
+            guard let objectJSON = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers) else {
+                LIPrint("Oggetto della risposta corrotto")
+                self.urlSession(session,task: downloadTask,didCompleteWithError: LIRequestError(forType: .incorrectResponseContentType,
+                                                                                                withUrlString:downloadTask.currentRequest?.url?.absoluteString))
+                return false
+            }
+            guard let object = objectJSON as? [AnyHashable:Any] else {
+                LIPrint("Oggetto non correttamente formattato")
+                self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .incorrectResponseContentType,
+                                                                                                  withUrlString:downloadTask.currentRequest?.url?.absoluteString))
+                return false
+            }
+            guard request.validationResponseObject(object) else {
+                LIPrint("Validazione fallita")
+                self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .errorInResponse,
+                                                                                                  withUrlString: downloadTask.currentRequest?.url?.absoluteString,
+                                                                                                  withErrorString:object["message"] as? String,
+                                                                                                  withParameters : object))
+                return false
+            }
+            if request.callbackName.isEmpty {
+                if !request.alreadyCalled {
+                    if let mime = downloadTask.response?.mimeType {
+                        request.realContentType = MimeType(mimeText: mime)
+                    }
+                    request.callSuccess(withObject: object, response: downloadTask.response, andMessage: object["message"] as? String)
+                    request.isCompleteObject?(request,true)
+                }
+            }
+            else {
+                if !request.alreadyCalled {
+                    if let mime = downloadTask.response?.mimeType {
+                        request.realContentType = MimeType(mimeText: mime)
+                    }
+                    request.callSuccess(withObject: object[request.callbackName], response: downloadTask.response, andMessage: object["message"] as? String)
+                    request.isCompleteObject?(request,true)
+                }
+            }
+            return true
+        }
+        
+        func completeText(forRequest request : LIRequest, with data : Data) -> Bool {
+            if let responseString = String(data: data, encoding: request.encoding) {
+                LIPrint("Contenuto nella risposta corretto")
+                if !request.alreadyCalled {
+                    if let mime = downloadTask.response?.mimeType {
+                        request.realContentType = MimeType(mimeText: mime)
+                    }
+                    request.callSuccess(withObject: responseString, response: downloadTask.response, andMessage: nil)
+                    request.isCompleteObject?(request,true)
+                }
+            } else {
+                LIPrint("Oggetto della risposta corrotto")
+                self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .incorrectResponseContentType,
+                                                                                                  withUrlString: downloadTask.currentRequest?.url?.absoluteString))
+                return false
+            }
+            return true
+        }
+        
+        func completeImage(forRequest request : LIRequest,wtih data : Data)->Bool {
+            if !request.alreadyCalled {
+                if let mime = downloadTask.response?.mimeType {
+                    request.realContentType = MimeType(mimeText: mime)
+                    if request.realContentType?.type != MimeType.TypeObject.image {
+                        self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .errorInResponse,
+                                                                                                          withUrlString: downloadTask.currentRequest?.url?.absoluteString,
+                                                                                                          withErrorString: nil,
+                                                                                                          withParameters: nil))
+                        return false
+                    }
+                }
+                request.callSuccess(withObject: data, response: downloadTask.response, andMessage: nil)
+            }
+            return true
+        }
+        
         LIPrint("Download dei dati completato")
         LIRequestInstance.shared.hideNetworkActivity()
         guard let request = LIRequestInstance.shared.requestForTask[downloadTask] else { return }
@@ -60,94 +178,31 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
             self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .noDataInResponse))
             return
         }
-        switch request.accept {
-        case LIRequest.Accept.applicationZip:
-            if !request.alreadyCalled {
-                var validation : (validate : Bool,message : String?) = (true,nil)
-                if let zipRequest = request as? LIZipRequest {
-                    if let data = try? Data(contentsOf: location) {
-                        validation = zipRequest.validationObject?(data) ?? (true,nil)
-                    }
-                }
-                guard validation.validate else {
-                    LIPrint("Validazione fallita")
-                    self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .errorInResponse,
-                                                                                                      withUrlString: downloadTask.currentRequest?.url?.absoluteString,
-                                                                                                      withErrorString:validation.message,
-                                                                                                      withParameters : nil))
-                    return
-                }
-                let tmp = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
-                let file = tmp.appendingPathComponent(Date().timeIntervalSince1970.description).appendingPathExtension("zip")
-                do {
-                    try FileManager.default.moveItem(at: location, to: file)
-                    request.callSuccess(withObject: file, andMessage: nil)
-                    request.isCompleteObject?(request,true)
-                }
-                catch {
-                    self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .errorInResponse,
-                                                                                                      withUrlString: downloadTask.currentRequest?.url?.absoluteString,
-                                                                                                      withErrorString: error.localizedDescription))
-                }
-            }
-        case LIRequest.Accept.applicationJson:
-            guard let objectJSON = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers) else {
-                LIPrint("Oggetto della risposta corrotto")
-                self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .incorrectResponseContentType,
-                                                                                                  withUrlString:downloadTask.currentRequest?.url?.absoluteString))
-                return
-            }
-            guard let object = objectJSON as? [AnyHashable:Any] else {
-                LIPrint("Oggetto non correttamente formattato")
-                self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .incorrectResponseContentType,
-                                                                                                  withUrlString:downloadTask.currentRequest?.url?.absoluteString))
-                return
-            }
-            guard request.validationResponseObject(object) else {
-                LIPrint("Validazione fallita")
-                self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .errorInResponse,
-                                                                                                  withUrlString: downloadTask.currentRequest?.url?.absoluteString,
-                                                                                                  withErrorString:object["message"] as? String,
-                                                                                                  withParameters : object))
-                return
-            }
-            if request.callbackName.isEmpty {
-                if !request.alreadyCalled {
-                    request.callSuccess(withObject: object, andMessage: object["message"] as? String)
-                    request.isCompleteObject?(request,true)
-                }
-            } else {
-                if !request.alreadyCalled {
-                    request.callSuccess(withObject: object[request.callbackName], andMessage: object["message"] as? String)
-                    request.isCompleteObject?(request,true)
-                }
-            }
-        case LIRequest.Accept.textHtml:
-            fallthrough
-        case LIRequest.Accept.textPlain:
-            fallthrough
-        case LIRequest.Accept.textCss:
-            fallthrough
-        case LIRequest.Accept.textCsv:
-            if let responseString = String(data: data, encoding: request.encoding) {
-                LIPrint("Contenuto nella risposta corretto")
-                if !request.alreadyCalled {
-                    request.callSuccess(withObject: responseString, andMessage: nil)
-                    request.isCompleteObject?(request,true)
-                }
-            } else {
-                LIPrint("Oggetto della risposta corrotto")
-                self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .incorrectResponseContentType,
-                                                                                                  withUrlString: downloadTask.currentRequest?.url?.absoluteString))
-                return
-            }
+        
+        switch (request.accept.type,request.accept.subtype) {
+        case (.image,_):
+            guard completeImage(forRequest: request, wtih: data) else { return }
+        case (.application,.zip):
+            guard completeApplicationDownload(forRequest: request, with: "zip") else { return }
+        case (.application,.pdf):
+            guard completeApplicationDownload(forRequest: request, with: "pdf") else { return }
+        case (.application,.json):
+            guard completeApplicationJson(forRequest: request, with: data) else { return }
+        case (.application,_):
+            guard completeApplicationDownload(forRequest: request, with: "temp") else { return }
+        case (.text,_):
+            guard completeText(forRequest: request, with: data) else { return }
         default:
             if !request.alreadyCalled {
-                request.callSuccess(withObject: data, andMessage: nil)
+                if let mime = downloadTask.response?.mimeType {
+                    request.realContentType = MimeType(mimeText: mime)
+                }
+                request.callSuccess(withObject: data, response: downloadTask.response, andMessage: nil)
                 request.isCompleteObject?(request,true)
             }
         }
     }
+    
     
     /// Viene chiamato durante la fase di upload dei dati.
     /// In questo metodo viene chiamato l'oggetto progress associato alla chiamata.
@@ -190,7 +245,10 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
         } else {
             LIPrint("Chiamata avvenuta con successo")
             if !request.alreadyCalled {
-                request.callSuccess(withObject: nil, andMessage: nil)
+                if let mime = task.response?.mimeType {
+                    request.realContentType = MimeType(mimeText: mime)
+                }
+                request.callSuccess(withObject: nil, response: task.response, andMessage: nil)
                 request.isCompleteObject?(request,true)
             }
         }

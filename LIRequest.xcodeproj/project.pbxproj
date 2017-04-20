@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6261BD271EA8F1E3008D9A39 /* MimeType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6261BD261EA8F1E3008D9A39 /* MimeType.swift */; };
 		62A235AF1E4291E5002CFE0D /* LIRequest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A17BE4541C99A1FB002A1673 /* LIRequest.framework */; };
 		62A235B51E429294002CFE0D /* LIRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A18806041D93304F00B59BB0 /* LIRequest.swift */; };
 		62A235B61E429294002CFE0D /* LIRequestLocalizable.strings in Sources */ = {isa = PBXBuildFile; fileRef = A1B8DD951DB8D906002B6FB7 /* LIRequestLocalizable.strings */; };
@@ -36,6 +37,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		6261BD261EA8F1E3008D9A39 /* MimeType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MimeType.swift; sourceTree = "<group>"; };
 		62A235AA1E4291E5002CFE0D /* LIRequestTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LIRequestTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		62FF2BD81E23742D00AB2973 /* CustomRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CustomRequest.swift; sourceTree = "<group>"; };
 		A117768E1DB5062000E1C682 /* Delegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Delegate.swift; sourceTree = "<group>"; };
@@ -96,6 +98,7 @@
 				A11776901DB5066700E1C682 /* Objects.swift */,
 				A1B8DD971DB8DD40002B6FB7 /* Structures.swift */,
 				62FF2BD81E23742D00AB2973 /* CustomRequest.swift */,
+				6261BD261EA8F1E3008D9A39 /* MimeType.swift */,
 				A17BE4591C99A1FB002A1673 /* Info.plist */,
 			);
 			path = LIRequest;
@@ -227,6 +230,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				62FF2BD91E23742D00AB2973 /* CustomRequest.swift in Sources */,
+				6261BD271EA8F1E3008D9A39 /* MimeType.swift in Sources */,
 				A1B8DD981DB8DD40002B6FB7 /* Structures.swift in Sources */,
 				A11776911DB5066700E1C682 /* Objects.swift in Sources */,
 				A18806051D93304F00B59BB0 /* LIRequest.swift in Sources */,

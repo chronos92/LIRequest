@@ -27,10 +27,12 @@ public class LIRequest : Equatable {
     }
     
     /// Indica la chiave Accept nell'header della richiesta
-    public var accept : LIRequest.Accept
+    public var accept : MimeType
     
     /// Indica il Content-Type di default impostato nell'inizializzazione dell'oggetto LIRequest
-    public var contentType : LIRequest.ContentType
+    public var contentType : MimeType
+    
+    public var realContentType : MimeType?
     
     /// Indica il valore della chiave di default contenente l'oggetto utile nella risposta
     public var callbackName : String
@@ -228,8 +230,8 @@ public class LIRequest : Equatable {
     private func request(forUrl url : URL,withMethod method : Method) -> URLRequest {
         var request = URLRequest(url: url)
         request.httpMethod = method.rawValue
-        request.addValue(self.contentType.key, forHTTPHeaderField: "Content-Type")
-        request.addValue(self.accept.key, forHTTPHeaderField: "Accept")
+        request.addValue(self.contentType.text, forHTTPHeaderField: "Content-Type")
+        request.addValue(self.accept.text, forHTTPHeaderField: "Accept")
         if let ua = userAgent {
             request.addValue(ua, forHTTPHeaderField: "User-Agent")
         }
@@ -348,10 +350,10 @@ public class LIRequest : Equatable {
         })
     }
     
-    internal func callSuccess(withObject object : Any?, andMessage message : String?) {
+    internal func callSuccess(withObject object : Any?, response: URLResponse?, andMessage message : String?) {
         LIPrint("Chiamo blocco success")
         self.successObjects.forEach { (success) in
-            success(object,message)
+            success(object, response, message)
         }
     }
     

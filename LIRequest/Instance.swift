@@ -14,10 +14,10 @@ public class LIRequestInstance : NSObject {
     public var testEnable : Bool = false
     
     /// Indica l' Accept di default impostato nell'inizializzazione dell'oggetto LIRequest
-    public var accept : LIRequest.Accept = LIRequest.Accept.applicationJson
+    public var accept : MimeType = MimeType(type: .application, subtype: .json)
     
     /// Indica il Content-Type di default impostato nell'inizializzazione dell'oggetto LIRequest
-    public var contentType : LIRequest.ContentType = .applicationJson
+    public var contentType : MimeType = MimeType(type: .application, subtype: .json)
     
     /// Indica il valore della chiave di default contenente l'oggetto utile nella risposta
     public var callbackName : String = ""
@@ -69,9 +69,9 @@ public class LIRequestInstance : NSObject {
     func addNewCall(withTask task : URLSessionTask, andRequest request: LIRequest) {
         let success = request.successObjects
         request.progress = Progress()
-        request.setSuccess(overrideDefault: true, withObject: { (obj, msg) in
+        request.setSuccess(overrideDefault: true, withObject: { (obj,resp, msg) in
             DispatchQueue.main.async {
-                success.forEach({ $0(obj,msg) })
+                success.forEach({ $0(obj,resp,msg) })
             }
             request.successCalled = true
         })
@@ -110,7 +110,7 @@ public class LIRequestInstance : NSObject {
     
     public func configureLabinfoSettings() {
         callbackName = "data"
-        contentType = .applicationFormUrlencoded
+        contentType = MimeType(type: .application, subtype: .xWwwFormUrlencoded)
         validationResponseObject = { response in
             guard let object = response else { return false }
             var value : Bool = false

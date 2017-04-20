@@ -15,7 +15,7 @@ public class LIImageRequest : LIRequest {
     
     public override init() {
         super.init()
-        self.accept = .imageJpeg
+        self.accept = MimeType(type: .image, subtype: .jpeg)
     }
     
     public func setImageSuccess(withObject object : @escaping ImageSuccessObject) {
@@ -23,14 +23,13 @@ public class LIImageRequest : LIRequest {
         self.imageSuccess = object
     }
     
-    override func callSuccess(withObject object: Any?, andMessage message: String?) {
+    override func callSuccess(withObject object: Any?,response:URLResponse?, andMessage message: String?) {
         if let imageObject = self.imageSuccess, let data = object as? Data, let image = UIImage(data:data)  {
             LIPrint("Call success image block")
-            imageObject(image, message)
+            imageObject(image,response, message)
         }
         else {
-            LIPrint("Success image block not set, call success block")
-            super.callSuccess(withObject: object, andMessage: message)
+            LIPrint("Success image block not set")
         }
     }
     
@@ -40,6 +39,75 @@ public class LIImageRequest : LIRequest {
     public override func addSuccess(withObject object: @escaping SuccessObject) {}
 }
 
+public class LIDownloadRequest : LIRequest {
+    internal var downloadSuccess : DownloadSuccessObject?
+    internal var validationObject: DownloadValidationResponseObject?
+    
+    public override init() {
+        super.init()
+        self.accept = MimeType(type: .application, subtype: .octetStream)
+    }
+    
+    public func setValidation(overrideDefault override: Bool, withObject object: @escaping DownloadValidationResponseObject) {
+        self.validationObject = object
+    }
+    
+    public func setDownloadSuccess(withObject object : @escaping DownloadSuccessObject) {
+        LIPrint("Set success download block")
+        self.downloadSuccess = object
+    }
+    
+    override func callSuccess(withObject object: Any?,response:URLResponse?, andMessage message: String?) {
+        let temporaryUrl = object as? URL
+        if let download = self.downloadSuccess, temporaryUrl != nil {
+            LIPrint("Call success download block")
+            self.successCalled = true
+            download(temporaryUrl!, message)
+        }
+        else {
+            LIPrint("Success download block not set")
+        }
+    }
+    @available(*,unavailable,renamed: "setValidation(overrideDefault:withObject:)")
+    public override func setValidation(overrideDefault override: Bool, withObject object: @escaping ValidationResponseObject) {}
+    @available(*,unavailable,renamed: "setZipSuccess(withObject:)")
+    public override func setSuccess(overrideDefault override: Bool, withObject object: @escaping SuccessObject) {}
+    @available(*,unavailable,renamed: "setZipSuccess(withObject:)")
+    public override func addSuccess(withObject object: @escaping SuccessObject) {}
+
+}
+
+public class LIJSONRequest : LIRequest {
+    internal var jsonSuccess : JSONSuccessObject?
+    
+    public override init() {
+        super.init()
+        self.accept = MimeType(type: .application, subtype: .json)
+    }
+    
+    public func setJSONSuccess(withObject object : @escaping JSONSuccessObject) {
+        LIPrint("Set success JSON block")
+        self.jsonSuccess = object
+    }
+    
+    override func callSuccess(withObject object: Any?,response:URLResponse?, andMessage message: String?) {
+        if let json = self.jsonSuccess, let jsonObject = object as? [AnyHashable:Any] {
+            LIPrint("Call success JSON block")
+            json(jsonObject,response, message)
+        }
+        else {
+            LIPrint("Success json block not set")
+        }
+    }
+    
+    @available(*,unavailable,renamed: "setJSONSuccess(withObject:)")
+    public override func setSuccess(overrideDefault override: Bool, withObject object: @escaping SuccessObject) {}
+    @available(*,unavailable,renamed: "setJSONSuccess(withObject:)")
+    public override func addSuccess(withObject object: @escaping SuccessObject) {}
+}
+
+
+@available(*,deprecated: 10.0,renamed:"LIDownloadRequest")
 public class LIZipRequest : LIRequest {
     
     internal var zipSuccess : ZipSuccessObject?
@@ -47,7 +115,7 @@ public class LIZipRequest : LIRequest {
     
     public override init() {
         super.init()
-        self.accept = .applicationZip
+        self.accept = MimeType(type: .application, subtype: .zip)
     }
     
     public func setValidation(overrideDefault override: Bool, withObject object: @escaping ZipValidationResponseObject) {
@@ -59,15 +127,14 @@ public class LIZipRequest : LIRequest {
         self.zipSuccess = object
     }
     
-    override func callSuccess(withObject object: Any?, andMessage message: String?) {
+    override func callSuccess(withObject object: Any?,response:URLResponse?, andMessage message: String?) {
         let dataObject = object as? URL
         if let zip = self.zipSuccess, dataObject != nil {
             LIPrint("Call success zip block")
             self.successCalled = true
-            zip(dataObject!, message)
+            zip(dataObject!, response, message)
         } else {
-            LIPrint("Success zip block not set, call success block")
-            super.callSuccess(withObject: object, andMessage: message)
+            LIPrint("Success zip block not set")
         }
     }
     
@@ -76,35 +143,5 @@ public class LIZipRequest : LIRequest {
     @available(*,unavailable,renamed: "setZipSuccess(withObject:)")
     public override func setSuccess(overrideDefault override: Bool, withObject object: @escaping SuccessObject) {}
     @available(*,unavailable,renamed: "setZipSuccess(withObject:)")
-    public override func addSuccess(withObject object: @escaping SuccessObject) {}
-}
-
-public class LIJSONRequest : LIRequest {
-    internal var jsonSuccess : JSONSuccessObject?
-    
-    public override init() {
-        super.init()
-        self.accept = .applicationJson
-    }
-    
-    public func setJSONSuccess(withObject object : @escaping JSONSuccessObject) {
-        LIPrint("Set success JSON block")
-        self.jsonSuccess = object
-    }
-    
-    override func callSuccess(withObject object: Any?, andMessage message: String?) {
-        if let json = self.jsonSuccess, let jsonObject = object as? [AnyHashable:Any] {
-            LIPrint("Call success JSON block")
-            json(jsonObject, message)
-        }
-        else {
-            LIPrint("Success json block not set, call success block")
-            super.callSuccess(withObject: object, andMessage: message)
-        }
-    }
-    
-    @available(*,unavailable,renamed: "setJSONSuccess(withObject:)")
-    public override func setSuccess(overrideDefault override: Bool, withObject object: @escaping SuccessObject) {}
-    @available(*,unavailable,renamed: "setJSONSuccess(withObject:)")
     public override func addSuccess(withObject object: @escaping SuccessObject) {}
 }

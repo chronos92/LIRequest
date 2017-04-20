@@ -54,7 +54,7 @@ public extension LIRequest {
         public static func ==(lhs: LIRequest.ContentType, rhs: LIRequest.ContentType) -> Bool {
             return lhs.key == rhs.key
         }
-
+        
         public let key : String
         public init(key k : String) {
             key = k
@@ -75,7 +75,7 @@ public extension LIRequest {
         
         
         static let multipartFormData = ContentType(key: "multipart/form-data")
-    
+        
     }
     
     /// Specifica l' Accept impostato nella richiesta
@@ -108,25 +108,80 @@ public extension LIRequest {
         public static func ==(lhs: LIRequest.Accept, rhs: LIRequest.Accept) -> Bool {
             return lhs.key == rhs.key
         }
-
-        let key : String
+        
+        var key : String {
+            return "\(typeName)/\(subtypeName)"
+        }
+        internal(set) var typeName: PrimaryTypeList
+        internal var subtypeName: String
         init(key k : String) {
-            key = k
+            let comps = k.components(separatedBy: "/")
+            if let first = comps.first {
+                typeName = PrimaryTypeList(rawValue: first) ?? .all
+            }
+            else {
+                typeName = .all
+            }
+            if comps.count > 1 {
+                subtypeName = (comps[1] != "" && comps[1] != "-") ? comps[1] : "*"
+            }
+            else {
+                subtypeName = "*"
+            }
+            
         }
         
+        public class text {
+            public static let plain = Accept(key: "text/plain")
+            public static let html = Accept(key: "text/html")
+            public static let css = Accept(key: "text/css")
+            public static let csv = Accept(key: "text/csv")
+        }
+        public class application {
+            public static let json = Accept(key: "application/json")
+            public static let octetStream = Accept(key: "application/octet-stream")
+            public static let formUrlencoded = Accept(key: "application/x-www-form-urlencoded")
+            public static let pdf = Accept(key: "application/pdf")
+            public static let zip = Accept(key: "application/zip")
+        }
+        public class image {
+            public static let jpeg = Accept(key: "image/jpeg")
+            public static let bmp = Accept(key: "image/bmp")
+            public static let gif = Accept(key: "image/gif")
+        }
+        
+        enum PrimaryTypeList : String {
+            case text = "text"
+            case application = "application"
+            case image = "image"
+            case all = "*"
+        }
+        
+        @available(*,unavailable,renamed: "text.plain")
         public static let textPlain = Accept(key: "text/plain")
+        @available(*,unavailable,renamed: "text.html")
         public static let textHtml = Accept(key: "text/html")
+        @available(*,unavailable,renamed: "text.css")
         public static let textCss = Accept(key: "text/css")
+        @available(*,unavailable,renamed: "text.csv")
         public static let textCsv = Accept(key: "text/csv")
         
+        @available(*,unavailable,renamed: "application.json")
         public static let applicationJson = Accept(key: "application/json")
+        @available(*,unavailable,renamed: "application.octetStream")
         public static let applicationOctetStream = Accept(key: "application/octet-stream")
+        @available(*,unavailable,renamed: "application.formUrlencoded")
         public static let applicationFormUrlencoded = Accept(key: "application/x-www-form-urlencoded")
+        @available(*,unavailable,renamed: "application.pdf")
         public static let applicationPdf = Accept(key: "application/pdf")
+        @available(*,unavailable,renamed: "application.zip")
         public static let applicationZip = Accept(key: "application/zip")
         
+        @available(*,unavailable,renamed: "image.jpeg")
         public static let imageJpeg = Accept(key: "image/jpeg")
+        @available(*,unavailable,renamed: "image.bmp")
         public static let imageBmp = Accept(key: "image/bmp")
+        @available(*,unavailable,renamed: "image.gif")
         public static let imageGif = Accept(key: "image/gif")
     }
 }
