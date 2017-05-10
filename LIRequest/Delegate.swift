@@ -95,8 +95,10 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
         func completeApplicationJson(forRequest request : LIRequest, with data : Data) -> Bool {
             guard let objectJSON = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers) else {
                 LIPrint("Oggetto della risposta corrotto")
-                self.urlSession(session,task: downloadTask,didCompleteWithError: LIRequestError(forType: .incorrectResponseContentType,
-                                                                                                withUrlString:downloadTask.currentRequest?.url?.absoluteString))
+                let string = String(data: data, encoding: .utf8)
+                self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .incorrectResponseContentType,
+                                                                                                  withUrlString: downloadTask.currentRequest?.url?.absoluteString,
+                                                                                                  withParameters: ["contentString":string ?? ""]))
                 return false
             }
             guard let object = objectJSON as? [AnyHashable:Any] else {
