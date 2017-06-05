@@ -133,17 +133,6 @@ public class LIRequest : Equatable {
     }
     
     private func insertQueryForPost(_ query : [URLQueryItem],inRequest request : inout URLRequest) {
-        if let url = request.url {
-            if var components = URLComponents(url: url, resolvingAgainstBaseURL: false) {
-                var queryItems = components.queryItems ?? []
-                queryItems.append(contentsOf: query)
-                components.queryItems = queryItems
-                if let queryString = components.percentEncodedQuery {
-                    request.httpBody = queryString.data(using: self.encoding)
-                    return
-                }
-            }
-        }
         request.httpBody = convertItemsToString(query).data(using: self.encoding)
     }
     
@@ -182,9 +171,8 @@ public class LIRequest : Equatable {
     }
     
     private func percentEncoding(forItem item : Any) -> String {
-        let allowedCharacters = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~")
-
-        let val = description(item).addingPercentEncoding(withAllowedCharacters: allowedCharacters)
+//        let allowedCharacters = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~")
+        let val = description(item).addingPercentEncoding(withAllowedCharacters: .urlHostAllowed)//addingPercentEncoding(withAllowedCharacters: allowedCharacters)
         assert(val != nil)
         return val!
     }
