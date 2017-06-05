@@ -174,7 +174,9 @@ public class LIRequest : Equatable {
     private func queryString(fromParameter params : [String:Any]) -> [URLQueryItem] {
         var array : [URLQueryItem] = []
         for (key,value) in params {
-            array.append(URLQueryItem(name: percentEncoding(forItem: key), value: percentEncoding(forItem: value)))
+            array.append(URLQueryItem(name: description(key),//percentEncoding(forItem: key),
+                                      value: description(value) //percentEncoding(forItem: value)
+            ))
         }
         return array
     }
