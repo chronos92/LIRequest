@@ -55,6 +55,7 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
         LIPrint("Download dei dati completato")
         LIRequestInstance.shared.hideNetworkActivity()
         guard let request = LIRequestInstance.shared.requestForTask[downloadTask] else { return }
+        weak var weakRequest = request
         guard let data = try? Data(contentsOf: location) else {
             LIPrint("Non sono presenti dati nella risposta")
             self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .noDataInResponse))
@@ -82,7 +83,7 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
                 do {
                     try FileManager.default.moveItem(at: location, to: file)
                     request.callSuccess(withObject: file, andMessage: nil)
-                    request.isCompleteObject?(request,true)
+                    request.isCompleteObject?(weakRequest,true)
                 }
                 catch {
                     self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .errorInResponse,
@@ -114,12 +115,12 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
             if request.callbackName.isEmpty {
                 if !request.alreadyCalled {
                     request.callSuccess(withObject: object, andMessage: object["message"] as? String)
-                    request.isCompleteObject?(request,true)
+                    request.isCompleteObject?(weakRequest,true)
                 }
             } else {
                 if !request.alreadyCalled {
                     request.callSuccess(withObject: object[request.callbackName], andMessage: object["message"] as? String)
-                    request.isCompleteObject?(request,true)
+                    request.isCompleteObject?(weakRequest,true)
                 }
             }
         case LIRequest.Accept.textHtml:
@@ -144,7 +145,7 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
         default:
             if !request.alreadyCalled {
                 request.callSuccess(withObject: data, andMessage: nil)
-                request.isCompleteObject?(request,true)
+                request.isCompleteObject?(weakRequest,true)
             }
         }
     }
@@ -180,18 +181,19 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
     public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
         LIRequestInstance.shared.hideNetworkActivity()
         guard let request = LIRequestInstance.shared.requestForTask[task] else { return }
+        weak var weakRequest = request
         if let currentError = error {
             LIPrint("Errore nella chiamata")
             if !request.alreadyCalled {
                 let lierr = (currentError as? LIRequestError)
                 request.callFailure(withObject: lierr?.parameters, andError: currentError)
-                request.isCompleteObject?(request,false)
+                request.isCompleteObject?(weakRequest,false)
             }
         } else {
             LIPrint("Chiamata avvenuta con successo")
             if !request.alreadyCalled {
                 request.callSuccess(withObject: nil, andMessage: nil)
-                request.isCompleteObject?(request,true)
+                request.isCompleteObject?(weakRequest,true)
             }
         }
     }

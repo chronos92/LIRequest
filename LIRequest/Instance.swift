@@ -68,19 +68,20 @@ public class LIRequestInstance : NSObject {
     
     func addNewCall(withTask task : URLSessionTask, andRequest request: LIRequest) {
         let success = request.successObjects
+        weak var weakRequest = request
         request.progress = Progress()
         request.setSuccess(overrideDefault: true, withObject: { (obj, msg) in
             DispatchQueue.main.async {
                 success.forEach({ $0(obj,msg) })
             }
-            request.successCalled = true
+            weakRequest?.successCalled = true
         })
         let failure = request.failureObjects
         request.setFailure(overrideDefault: true, withObject: { (obj, msg) in
             DispatchQueue.main.async {
                 failure.forEach({ $0(obj,msg) })
             }
-            request.failureCalled = true
+            weakRequest?.failureCalled = true
         })
         let complete = request.isCompleteObject
         let removingCode : IsCompleteObject = {(_, _) in
@@ -88,7 +89,7 @@ public class LIRequestInstance : NSObject {
         }
         request.setIsComplete(overrideDefault: true) { (request, completed) in
             complete?(request,(complete != nil))
-            removingCode(request, completed)
+            removingCode(weakRequest, completed)
         }
         requestForTask[task] = request
         listOfCall.append(task)
@@ -122,13 +123,14 @@ public class LIRequestInstance : NSObject {
             }
             return value
         }
-
     }
     
     public func stopAllTask() {
         for task in listOfCall {
             task.cancel()
+            requestForTask.removeValue(forKey: task)
         }
+        listOfCall.removeAll()
     }
     
     internal func remove(task : URLSessionTask) {

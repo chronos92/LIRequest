@@ -11,7 +11,7 @@ import UIKit
 
 /// - parameter request : oggetto che ha effettuato la richiesta
 /// - parameter state: definisce se la richiesta è andata a buon fine oppure è fallita
-public typealias IsCompleteObject = ((_ request:LIRequest,_ state:Bool)->Void)
+public typealias IsCompleteObject = ((_ request:LIRequest?,_ state:Bool)->Void)
 
 /// - parameter object : oggetto ricevuto dal server
 /// - parameter error : specifica che tipo di errore c'è stato
