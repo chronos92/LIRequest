@@ -69,19 +69,12 @@ public class LIRequestInstance : NSObject {
     func addNewCall(withTask task : URLSessionTask, andRequest request: LIRequest) {
         let success = request.successObjects
         request.progress = Progress()
-        request.setSuccess(overrideDefault: true, withObject: { (obj,resp, msg) in
-            DispatchQueue.main.async {
-                success.forEach({ $0(obj,resp,msg) })
-            }
-            request.successCalled = true
-        })
-        let failure = request.failureObjects
-        request.setFailure(overrideDefault: true, withObject: { (obj, msg) in
-            DispatchQueue.main.async {
-                failure.forEach({ $0(obj,msg) })
-            }
-            request.failureCalled = true
-        })
+        request.addSuccess { (req, _, _, _) in
+            req.successCalled = true
+        }
+        request.addFailure { (req, _, _) in
+            req.failureCalled = true
+        }
         let complete = request.isCompleteObject
         let removingCode : IsCompleteObject = {(_, _) in
             self.remove(task: task)

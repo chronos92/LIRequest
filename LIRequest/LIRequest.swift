@@ -113,7 +113,7 @@ public class LIRequest : Equatable {
                     query = []
                     LIPrint("Errore nella codifica dei parametri")
                     let error = LIRequestError(forType: .incorrectParametersToSend,withParameters:par)
-                    self.failureObjects.forEach({$0(nil,error)})
+                    self.failureObjects.forEach({[unowned self] in $0(self,nil,error)})
                 }
             } else {
                 query = queryString(fromParameter: par)
@@ -193,7 +193,7 @@ public class LIRequest : Equatable {
         var request = self.request(forUrl: url,withMethod: .post)
         request.setValue("multipart/form-data", forHTTPHeaderField: "Content-Type")
         guard let imageData = UIImagePNGRepresentation(image) else {
-            self.failureObjects.forEach({ $0(nil,LIRequestError(forType: .incorrectImageToSend))})
+            self.failureObjects.forEach({[unowned self] in $0(self,nil,LIRequestError(forType: .incorrectImageToSend))})
             return
         }
         var body = Data()
@@ -342,15 +342,15 @@ public class LIRequest : Equatable {
     
     internal func callSuccess(withObject object : Any?, response: URLResponse?, andMessage message : String?) {
         LIPrint("Chiamo blocco success")
-        self.successObjects.forEach { (success) in
-            success(object, response, message)
+        self.successObjects.forEach {[unowned self] (success) in
+            success(self,object, response, message)
         }
     }
     
     internal func callFailure(withObject object:Any?,andError error : Error) {
         LIPrint("Chiamo blocco failure")
-        self.failureObjects.forEach { (failure) in
-            failure(object,error)
+        self.failureObjects.forEach {[unowned self] (failure) in
+            failure(self,object,error)
         }
     }
 }

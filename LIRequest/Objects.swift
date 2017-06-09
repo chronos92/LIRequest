@@ -15,11 +15,11 @@ public typealias IsCompleteObject = ((_ request:LIRequest,_ state:Bool)->Void)
 
 /// - parameter object : oggetto ricevuto dal server
 /// - parameter error : specifica che tipo di errore c'è stato
-public typealias FailureObject = ((_ object:Any?,_ error : Error)->Void)
+public typealias FailureObject = ((_ request:LIRequest,_ object:Any?,_ error : Error)->Void)
 
 /// - parameter object : oggetto ricevuto dal server
 /// - parameter message : messaggio ricevuto dal server
-public typealias SuccessObject = ((_ object:Any?,_ response : URLResponse?,_ message:String?)->Void)
+public typealias SuccessObject = ((_ request:LIRequest,_ object:Any?,_ response : URLResponse?,_ message:String?)->Void)
 
 /// - parameter response : oggetto ricevuto dal server
 /// - returns : true se l'oggetto rispetta la validazione altrimenti false
