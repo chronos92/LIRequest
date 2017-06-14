@@ -42,7 +42,7 @@ extension UIImageView {
                     }
                 }
             })
-            request.setFailure(overrideDefault: true, withObject: { (_, _) in
+            request.setFailure(overrideDefault: true, withObject: { (_,_, _) in
                 debugPrint("call failure")
                 DispatchQueue.main.async {
                     self.image = placeholderImage
