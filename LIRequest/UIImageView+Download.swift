@@ -9,20 +9,20 @@
 import Foundation
 import UIKit
 
-extension UIImageView {
-    func setImage(withUrl url : URL) {
+public extension UIImageView {
+    public func setImage(withUrl url : URL) {
         self.setImage(withUrl: url, showLoadIndicator: false)
     }
-    func setImage(withUrl url : URL, showLoadIndicator:Bool) {
+    public func setImage(withUrl url : URL, showLoadIndicator:Bool) {
         self.setImage(withUrl: url, placeholderImage: nil, showLoadIndicator: showLoadIndicator)
     }
-    func setImage(withUrl url : URL, placeholderImage : UIImage) {
+    public func setImage(withUrl url : URL, placeholderImage : UIImage) {
         self.setImage(withUrl: url, placeholderImage: placeholderImage,showLoadIndicator:false)
     }
-    func setImage(withUrl url : URL, placeholderImage : UIImage,showLoadIndicator : Bool) {
+    public func setImage(withUrl url : URL, placeholderImage : UIImage,showLoadIndicator : Bool) {
         self.setImage(withUrl: url, placeholderImage: placeholderImage, showLoadIndicator: showLoadIndicator)
     }
-    private func setImage(withUrl url : URL, placeholderImage : UIImage?, showLoadIndicator:Bool) {
+    public private func setImage(withUrl url : URL, placeholderImage : UIImage?, showLoadIndicator:Bool) {
         if let image = LICacheImage.shared.object(forKey: url.absoluteString as NSString) {
             debugPrint("use cache")
             self.image = image
