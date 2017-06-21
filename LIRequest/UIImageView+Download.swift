@@ -19,7 +19,7 @@ public extension UIImageView {
     public func setImage(withUrl url : URL, placeholderImage : UIImage!) {
         self.setImage(withUrl: url, placeholderImage: placeholderImage,showLoadIndicator:false)
     }
-    private func setImage(withUrl url : URL, placeholderImage : UIImage!, showLoadIndicator:Bool) {
+    public func setImage(withUrl url : URL, placeholderImage : UIImage!, showLoadIndicator:Bool) {
         if let image = LICacheImage.shared.object(forKey: url.absoluteString as NSString) {
             debugPrint("use cache")
             self.image = image
