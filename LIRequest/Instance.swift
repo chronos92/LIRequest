@@ -67,9 +67,8 @@ public class LIRequestInstance : NSObject {
     }
     
     func addNewCall(withTask task : URLSessionTask, andRequest request: LIRequest) {
-        let success = request.successObjects
         request.progress = Progress()
-        request.addSuccess { (req, _, _, _) in
+        request.addSuccess { (req, _, _) in
             req.successCalled = true
         }
         request.addFailure { (req, _, _) in

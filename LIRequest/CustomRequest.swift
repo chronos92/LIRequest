@@ -23,10 +23,10 @@ public class LIImageRequest : LIRequest {
         self.imageSuccess = object
     }
     
-    override func callSuccess(withObject object: Any?,response:URLResponse?, andMessage message: String?) {
+    override func callSuccess(withObject object: Any?, andMessage message: String?) {
         if let imageObject = self.imageSuccess, let data = object as? Data, let image = UIImage(data:data)  {
             LIPrint("Call success image block")
-            imageObject(image,response, message)
+            imageObject(self,image, message)
         }
         else {
             LIPrint("Success image block not set")
@@ -57,12 +57,12 @@ public class LIDownloadRequest : LIRequest {
         self.downloadSuccess = object
     }
     
-    override func callSuccess(withObject object: Any?,response:URLResponse?, andMessage message: String?) {
+    override func callSuccess(withObject object: Any?, andMessage message: String?) {
         let temporaryUrl = object as? URL
         if let download = self.downloadSuccess, temporaryUrl != nil {
             LIPrint("Call success download block")
             self.successCalled = true
-            download(temporaryUrl!, message)
+            download(self,temporaryUrl!, message)
         }
         else {
             LIPrint("Success download block not set")
@@ -90,10 +90,10 @@ public class LIJSONRequest : LIRequest {
         self.jsonSuccess = object
     }
     
-    override func callSuccess(withObject object: Any?,response:URLResponse?, andMessage message: String?) {
-        if let json = self.jsonSuccess, let jsonObject = object as? [AnyHashable:Any] {
+    override func callSuccess(withObject object: Any?, andMessage message: String?) {
+        if let json = self.jsonSuccess {
             LIPrint("Call success JSON block")
-            json(jsonObject,response, message)
+            json(self,object as? [AnyHashable:Any] ?? [:], message)
         }
         else {
             LIPrint("Success json block not set")
@@ -127,12 +127,12 @@ public class LIZipRequest : LIRequest {
         self.zipSuccess = object
     }
     
-    override func callSuccess(withObject object: Any?,response:URLResponse?, andMessage message: String?) {
+    override func callSuccess(withObject object: Any?, andMessage message: String?) {
         let dataObject = object as? URL
         if let zip = self.zipSuccess, dataObject != nil {
             LIPrint("Call success zip block")
             self.successCalled = true
-            zip(dataObject!, response, message)
+            zip(self,dataObject!, message)
         } else {
             LIPrint("Success zip block not set")
         }

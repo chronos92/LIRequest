@@ -27,7 +27,7 @@ public extension UIImageView {
         else {
             debugPrint("call")
             let request = LIImageRequest()
-            request.setImageSuccess(withObject: { (image, response, _) in
+            request.setImageSuccess(withObject: { (request, image, message) in
                 debugPrint("call success")
                 DispatchQueue.main.async {
                     if let img = image {

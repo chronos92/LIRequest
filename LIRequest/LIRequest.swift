@@ -340,10 +340,10 @@ public class LIRequest : Equatable {
         })
     }
     
-    internal func callSuccess(withObject object : Any?, response: URLResponse?, andMessage message : String?) {
+    internal func callSuccess(withObject object : Any?, andMessage message : String?) {
         LIPrint("Chiamo blocco success")
         self.successObjects.forEach {[unowned self] (success) in
-            success(self,object, response, message)
+            success(self, object, message)
         }
     }
     

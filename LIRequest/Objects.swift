@@ -19,7 +19,7 @@ public typealias FailureObject = ((_ request:LIRequest,_ object:Any?,_ error : E
 
 /// - parameter object : oggetto ricevuto dal server
 /// - parameter message : messaggio ricevuto dal server
-public typealias SuccessObject = ((_ request:LIRequest,_ object:Any?,_ response : URLResponse?,_ message:String?)->Void)
+public typealias SuccessObject = ((_ request:LIRequest,_ object:Any?,_ message:String?)->Void)
 
 /// - parameter response : oggetto ricevuto dal server
 /// - returns : true se l'oggetto rispetta la validazione altrimenti false
@@ -30,14 +30,14 @@ public typealias ProgressObject = ((_ progress : Progress)->Void)
 
 public typealias ObjectConversion = ((_ parameters : [String:Any]) throws ->[URLQueryItem])
 
-public typealias DownloadSuccessObject = ((_ temporaryLocation : URL,_ message : String?)->Void)
+public typealias DownloadSuccessObject = ((_ request:LIRequest,_ temporaryLocation : URL,_ message : String?)->Void)
 
 public typealias DownloadValidationResponseObject = ((_ response : Any?)->(validate:Bool,message:String?))
 
-public typealias JSONSuccessObject = ((_ jsonObject : [AnyHashable:Any],_ response : URLResponse?, _ message : String?)->Void)
+public typealias JSONSuccessObject = ((_ request:LIRequest,_ jsonObject : [AnyHashable:Any], _ message : String?)->Void)
 
-public typealias ImageSuccessObject = ((_ image : UIImage?,_ response : URLResponse?, _ message : String?)->Void)
+public typealias ImageSuccessObject = ((_ request:LIRequest,_ image : UIImage?, _ message : String?)->Void)
 
-public typealias ZipSuccessObject = ((_ data : URL,_ response : URLResponse?, _ message:String?)->Void)
+public typealias ZipSuccessObject = ((_ request:LIRequest,_ data : URL, _ message:String?)->Void)
 
 public typealias ZipValidationResponseObject = ((_ response : Any?)->(validate:Bool,message:String?))

@@ -79,7 +79,7 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
                         request.realContentType = MimeType(mimeText: mime)
                     }
                     
-                    request.callSuccess(withObject: file, response: downloadTask.response, andMessage: nil)
+                    request.callSuccess(withObject: file, andMessage: nil)
                     request.isCompleteObject?(request,true)
                 }
                 catch {
@@ -120,7 +120,7 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
                     if let mime = downloadTask.response?.mimeType {
                         request.realContentType = MimeType(mimeText: mime)
                     }
-                    request.callSuccess(withObject: object, response: downloadTask.response, andMessage: object["message"] as? String)
+                    request.callSuccess(withObject: object, andMessage: object["message"] as? String)
                     request.isCompleteObject?(request,true)
                 }
             }
@@ -129,7 +129,7 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
                     if let mime = downloadTask.response?.mimeType {
                         request.realContentType = MimeType(mimeText: mime)
                     }
-                    request.callSuccess(withObject: object[request.callbackName], response: downloadTask.response, andMessage: object["message"] as? String)
+                    request.callSuccess(withObject: object[request.callbackName], andMessage: object["message"] as? String)
                     request.isCompleteObject?(request,true)
                 }
             }
@@ -143,7 +143,7 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
                     if let mime = downloadTask.response?.mimeType {
                         request.realContentType = MimeType(mimeText: mime)
                     }
-                    request.callSuccess(withObject: responseString, response: downloadTask.response, andMessage: nil)
+                    request.callSuccess(withObject: responseString, andMessage: nil)
                     request.isCompleteObject?(request,true)
                 }
             } else {
@@ -167,7 +167,7 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
                         return false
                     }
                 }
-                request.callSuccess(withObject: data, response: downloadTask.response, andMessage: nil)
+                request.callSuccess(withObject: data, andMessage: nil)
             }
             return true
         }
@@ -199,7 +199,7 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
                 if let mime = downloadTask.response?.mimeType {
                     request.realContentType = MimeType(mimeText: mime)
                 }
-                request.callSuccess(withObject: data, response: downloadTask.response, andMessage: nil)
+                request.callSuccess(withObject: data, andMessage: nil)
                 request.isCompleteObject?(request,true)
             }
         }
@@ -250,7 +250,7 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
                 if let mime = task.response?.mimeType {
                     request.realContentType = MimeType(mimeText: mime)
                 }
-                request.callSuccess(withObject: nil, response: task.response, andMessage: nil)
+                request.callSuccess(withObject: nil, andMessage: nil)
                 request.isCompleteObject?(request,true)
             }
         }
