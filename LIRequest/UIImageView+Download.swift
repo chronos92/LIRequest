@@ -16,13 +16,10 @@ public extension UIImageView {
     public func setImage(withUrl url : URL, showLoadIndicator:Bool) {
         self.setImage(withUrl: url, placeholderImage: nil, showLoadIndicator: showLoadIndicator)
     }
-    public func setImage(withUrl url : URL, placeholderImage : UIImage) {
+    public func setImage(withUrl url : URL, placeholderImage : UIImage!) {
         self.setImage(withUrl: url, placeholderImage: placeholderImage,showLoadIndicator:false)
     }
-    public func setImage(withUrl url : URL, placeholderImage : UIImage,showLoadIndicator : Bool) {
-        self.setImage(withUrl: url, placeholderImage: placeholderImage, showLoadIndicator: showLoadIndicator)
-    }
-    private func setImage(withUrl url : URL, placeholderImage : UIImage?, showLoadIndicator:Bool) {
+    private func setImage(withUrl url : URL, placeholderImage : UIImage!, showLoadIndicator:Bool) {
         if let image = LICacheImage.shared.object(forKey: url.absoluteString as NSString) {
             debugPrint("use cache")
             self.image = image
