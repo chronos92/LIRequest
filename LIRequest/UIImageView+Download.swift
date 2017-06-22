@@ -10,53 +10,58 @@ import Foundation
 import UIKit
 
 public extension UIImageView {
-    public func setImage(withUrl url : URL) {
+    public func setImage(withUrl url : URL!) {
         self.setImage(withUrl: url, showLoadIndicator: false)
     }
-    public func setImage(withUrl url : URL, showLoadIndicator:Bool) {
+    public func setImage(withUrl url : URL!, showLoadIndicator:Bool) {
         self.setImage(withUrl: url, placeholderImage: nil, showLoadIndicator: showLoadIndicator)
     }
-    public func setImage(withUrl url : URL, placeholderImage : UIImage!) {
+    public func setImage(withUrl url : URL!, placeholderImage : UIImage!) {
         self.setImage(withUrl: url, placeholderImage: placeholderImage,showLoadIndicator:false)
     }
-    public func setImage(withUrl url : URL, placeholderImage : UIImage!, showLoadIndicator:Bool) {
-        if let image = LICacheImage.shared.object(forKey: url.absoluteString as NSString) {
-            debugPrint("use cache")
-            self.image = image
-        }
-        else {
-            debugPrint("call")
-            let request = LIImageRequest()
-            request.setImageSuccess(withObject: { (request, image, message) in
-                debugPrint("call success")
-                DispatchQueue.main.async {
-                    if let img = image {
-                        LICacheImage.shared.setObject(img, forKey: url.absoluteString as NSString)
-                        self.image = img
+    public func setImage(withUrl url : URL!, placeholderImage : UIImage!, showLoadIndicator:Bool) {
+        if url != nil {
+            if let image = LICacheImage.shared.object(forKey: url.absoluteString as NSString) {
+                debugPrint("use cache")
+                self.image = image
+            }
+            else {
+                debugPrint("call")
+                let request = LIImageRequest()
+                request.setImageSuccess(withObject: { (request, image, message) in
+                    debugPrint("call success")
+                    DispatchQueue.main.async {
+                        if let img = image {
+                            LICacheImage.shared.setObject(img, forKey: url.absoluteString as NSString)
+                            self.image = img
+                        }
+                        else {
+                            self.image = placeholderImage
+                        }
                     }
-                    else {
+                })
+                request.setFailure(overrideDefault: true, withObject: { (_,_, _) in
+                    debugPrint("call failure")
+                    DispatchQueue.main.async {
                         self.image = placeholderImage
                     }
+                })
+                request.setIsComplete(overrideDefault: true, withObject: { (_, _) in
+                    debugPrint("call complete")
+                    DispatchQueue.main.async {
+                        self.hideIndicator()
+                    }
+                })
+                if showLoadIndicator {
+                    DispatchQueue.main.async {
+                        self.showIndicator()
+                    }
                 }
-            })
-            request.setFailure(overrideDefault: true, withObject: { (_,_, _) in
-                debugPrint("call failure")
-                DispatchQueue.main.async {
-                    self.image = placeholderImage
-                }
-            })
-            request.setIsComplete(overrideDefault: true, withObject: { (_, _) in
-                debugPrint("call complete")
-                DispatchQueue.main.async {
-                    self.hideIndicator()
-                }
-            })
-            if showLoadIndicator {
-                DispatchQueue.main.async {
-                    self.showIndicator()
-                }
+                request.get(toURL: url, withParams: nil)
             }
-            request.get(toURL: url, withParams: nil)
+        }
+        else {
+            self.image = placeholderImage
         }
     }
     
