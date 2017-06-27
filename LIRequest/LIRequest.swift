@@ -50,7 +50,7 @@ public class LIRequest : Equatable {
     internal var successObjects : [SuccessObject]
     internal var progressObject : ProgressObject?
     internal var validationResponseObject : ValidationResponseObject
-    internal var progress : Progress!
+    public var progress : Progress!
     
     internal var failureCalled : Bool = false
     internal var successCalled : Bool = false
