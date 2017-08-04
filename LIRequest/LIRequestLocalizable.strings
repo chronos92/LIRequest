@@ -7,7 +7,7 @@
 */
 
 
-ErrorCall="Errore nella chiamata";
+ErrorCall="Sono stati riscontrati dei problemi durante la comunicazione";//"Errore nella chiamata";
 
 ErrorInvalidUrl="Url non valido";
 ErrorInvalidUrlSuggestion="Controlla la validità dell'url";

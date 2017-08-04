@@ -383,7 +383,7 @@ public class LIRequestError : NSError {
         public var errorDescription: String? {
             switch self {
             default:
-                return NSLocalizedString("ErrorCall", comment: "")
+                return LILocalizedString("ErrorCall", comment: "")
             }
         }
         
