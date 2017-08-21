@@ -83,7 +83,6 @@ public class LIJSONRequest : LIRequest {
     public override init() {
         super.init()
         self.accept = MimeType(type: .application, subtype: .json)
-        self.contentType = MimeType(type: .application, subtype: .xWwwFormUrlencoded)
     }
     
     public func setJSONSuccess(withObject object : @escaping JSONSuccessObject) {

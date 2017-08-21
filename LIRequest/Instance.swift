@@ -17,7 +17,7 @@ public class LIRequestInstance : NSObject {
     public var accept : MimeType = MimeType(type: .application, subtype: .json)
     
     /// Indica il Content-Type di default impostato nell'inizializzazione dell'oggetto LIRequest
-    public var contentType : MimeType = MimeType(type: .application, subtype: .json)
+    public var contentType : MimeType = MimeType(type: .application, subtype: .xWwwFormUrlencoded)
     
     /// Indica il valore della chiave di default contenente l'oggetto utile nella risposta
     public var callbackName : String = ""
