@@ -28,6 +28,9 @@ public extension UIImageView {
             else {
                 debugPrint("call")
                 let request = LIImageRequest()
+                request.setProgress(withObject: { (progress) in
+                    self.indicatorView?.progress = CGFloat(progress.fractionCompleted)
+                })
                 request.setImageSuccess(withObject: { (request, image, message) in
                     debugPrint("call success")
                     DispatchQueue.main.async {
@@ -48,9 +51,6 @@ public extension UIImageView {
                 })
                 request.setIsComplete(overrideDefault: true, withObject: { (_, _) in
                     debugPrint("call complete")
-                    DispatchQueue.main.async {
-                        self.hideIndicator()
-                    }
                 })
                 if showLoadIndicator {
                     DispatchQueue.main.async {
@@ -65,14 +65,25 @@ public extension UIImageView {
         }
     }
     
-    private func hideIndicator() {
-        self.viewWithTag(9876)?.removeFromSuperview()
+    internal var indicatorView : CircularLoaderView? {
+        get {
+            return self.viewWithTag(9876) as? CircularLoaderView
+        }
     }
+    
+
     private func showIndicator() {
-        let indicator = UIActivityIndicatorView(activityIndicatorStyle: .gray)
-        indicator.tag = 9876
-        indicator.center = self.center
-        indicator.startAnimating()
-        self.addSubview(indicator)
+        let indicatorView = CircularLoaderView(frame: .zero)
+        indicatorView.tag = 9876
+        addSubview(indicatorView)
+        addConstraints(NSLayoutConstraint.constraints(
+            withVisualFormat: "V:|[v]|", options: .init(rawValue: 0),
+            metrics: nil, views: ["v": indicatorView]))
+        addConstraints(NSLayoutConstraint.constraints(
+            withVisualFormat: "H:|[v]|", options: .init(rawValue: 0),
+            metrics: nil, views:  ["v": indicatorView]))
+        indicatorView.translatesAutoresizingMaskIntoConstraints = false
+        indicatorView.reveal()
     }
+
 }
