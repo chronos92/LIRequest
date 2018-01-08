@@ -41,12 +41,14 @@ public extension UIImageView {
                         else {
                             self.image = placeholderImage
                         }
+                        self.indicatorView?.reveal()
                     }
                 })
                 request.setFailure(overrideDefault: true, withObject: { (_,_, _) in
                     debugPrint("call failure")
                     DispatchQueue.main.async {
                         self.image = placeholderImage
+                        self.indicatorView?.reveal()
                     }
                 })
                 request.setIsComplete(overrideDefault: true, withObject: { (_, _) in
@@ -83,7 +85,6 @@ public extension UIImageView {
             withVisualFormat: "H:|[v]|", options: .init(rawValue: 0),
             metrics: nil, views:  ["v": indicatorView]))
         indicatorView.translatesAutoresizingMaskIntoConstraints = false
-        indicatorView.reveal()
     }
 
 }
