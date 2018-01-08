@@ -342,8 +342,8 @@ public class LIRequest : Equatable {
     
     internal func callSuccess(withObject object : Any?, andMessage message : String?) {
         LIPrint("Chiamo blocco success")
-        self.successObjects.forEach {[unowned self] (success) in
-            DispatchQueue.global().async {
+        DispatchQueue.global().async {
+            self.successObjects.forEach {[unowned self] (success) in
                 success(self, object, message)
             }
         }
@@ -351,8 +351,8 @@ public class LIRequest : Equatable {
     
     internal func callFailure(withObject object:Any?,andError error : Error) {
         LIPrint("Chiamo blocco failure")
-        self.failureObjects.forEach {[unowned self] (failure) in
-            DispatchQueue.global().async {
+        DispatchQueue.global().async {
+            self.failureObjects.forEach {[unowned self] (failure) in
                 failure(self,object,error)
             }
         }
