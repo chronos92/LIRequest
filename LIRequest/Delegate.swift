@@ -78,9 +78,10 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
                     if let mime = downloadTask.response?.mimeType {
                         request.realContentType = MimeType(mimeText: mime)
                     }
-                    
-                    request.callSuccess(withObject: file, andMessage: nil)
-                    request.isCompleteObject?(request,true)
+                    DispatchQueue.global().async {
+                        request.callSuccess(withObject: file, andMessage: nil)
+                        request.isCompleteObject?(request,true)
+                    }
                 }
                 catch {
                     self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .errorInResponse,
@@ -120,8 +121,10 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
                     if let mime = downloadTask.response?.mimeType {
                         request.realContentType = MimeType(mimeText: mime)
                     }
-                    request.callSuccess(withObject: object, andMessage: object["message"] as? String)
-                    request.isCompleteObject?(request,true)
+                    DispatchQueue.global().async {
+                        request.callSuccess(withObject: object, andMessage: object["message"] as? String)
+                        request.isCompleteObject?(request,true)
+                    }
                 }
             }
             else {
@@ -129,8 +132,10 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
                     if let mime = downloadTask.response?.mimeType {
                         request.realContentType = MimeType(mimeText: mime)
                     }
-                    request.callSuccess(withObject: object[request.callbackName], andMessage: object["message"] as? String)
-                    request.isCompleteObject?(request,true)
+                    DispatchQueue.global().async {
+                        request.callSuccess(withObject: object[request.callbackName], andMessage: object["message"] as? String)
+                        request.isCompleteObject?(request,true)
+                    }
                 }
             }
             return true
@@ -143,8 +148,10 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
                     if let mime = downloadTask.response?.mimeType {
                         request.realContentType = MimeType(mimeText: mime)
                     }
-                    request.callSuccess(withObject: responseString, andMessage: nil)
-                    request.isCompleteObject?(request,true)
+                    DispatchQueue.global().async {
+                        request.callSuccess(withObject: responseString, andMessage: nil)
+                        request.isCompleteObject?(request,true)
+                    }
                 }
             } else {
                 LIPrint("Oggetto della risposta corrotto")
@@ -167,7 +174,9 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
                         return false
                     }
                 }
-                request.callSuccess(withObject: data, andMessage: nil)
+                DispatchQueue.global().async {
+                    request.callSuccess(withObject: data, andMessage: nil)
+                }
             }
             return true
         }
@@ -199,8 +208,10 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
                 if let mime = downloadTask.response?.mimeType {
                     request.realContentType = MimeType(mimeText: mime)
                 }
-                request.callSuccess(withObject: data, andMessage: nil)
-                request.isCompleteObject?(request,true)
+                DispatchQueue.global().async {
+                    request.callSuccess(withObject: data, andMessage: nil)
+                    request.isCompleteObject?(request,true)
+                }
             }
         }
     }
