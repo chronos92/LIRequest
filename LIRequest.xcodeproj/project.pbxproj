@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		621B8583200EA65100921F74 /* LIResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 621B8582200EA65100921F74 /* LIResponse.swift */; };
 		6261BD271EA8F1E3008D9A39 /* MimeType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6261BD261EA8F1E3008D9A39 /* MimeType.swift */; };
 		628FC24B1FA7D448007DFB25 /* CircularLoaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 628FC24A1FA7D448007DFB25 /* CircularLoaderView.swift */; };
 		62A235AF1E4291E5002CFE0D /* LIRequest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A17BE4541C99A1FB002A1673 /* LIRequest.framework */; };
@@ -40,6 +41,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		621B8582200EA65100921F74 /* LIResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LIResponse.swift; sourceTree = "<group>"; };
 		6261BD261EA8F1E3008D9A39 /* MimeType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MimeType.swift; sourceTree = "<group>"; };
 		628FC24A1FA7D448007DFB25 /* CircularLoaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircularLoaderView.swift; sourceTree = "<group>"; };
 		62A235AA1E4291E5002CFE0D /* LIRequestTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LIRequestTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -90,6 +92,7 @@
 			isa = PBXGroup;
 			children = (
 				A18806041D93304F00B59BB0 /* LIRequest.swift */,
+				621B8582200EA65100921F74 /* LIResponse.swift */,
 				A11776921DB5069200E1C682 /* Instance.swift */,
 				A117768E1DB5062000E1C682 /* Delegate.swift */,
 				A11776901DB5066700E1C682 /* Objects.swift */,
@@ -262,6 +265,7 @@
 				A18806051D93304F00B59BB0 /* LIRequest.swift in Sources */,
 				628FC24B1FA7D448007DFB25 /* CircularLoaderView.swift in Sources */,
 				A11776931DB5069200E1C682 /* Instance.swift in Sources */,
+				621B8583200EA65100921F74 /* LIResponse.swift in Sources */,
 				62D567D31EA91FB000D76214 /* LIRequestImageCache.swift in Sources */,
 				A117768F1DB5062000E1C682 /* Delegate.swift in Sources */,
 			);

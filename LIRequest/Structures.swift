@@ -23,6 +23,8 @@ public extension LIRequest {
     public enum Method : String {
         case post = "POST"
         case get = "GET"
+        case delete = "DELETE"
+        case put = "PUT"
     }
     
     /// Specifica il Content-Type impostato nella richiesta

@@ -17,3 +17,4 @@ ErrorIncorrectContentType="Errore nel Content-Type della risposta";
 ErrorIncorrectParametersToSend="Errore nei parametri da inviare";
 ErrorIncorrectImageToSend="Errore nell'immagine da inviare";
 ErrorAbortedCall="La comunicazione è stata annullata";
+ErrorNoResponse="Errore nella recezione della risposta";

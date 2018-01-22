@@ -26,7 +26,7 @@ public class LIImageRequest : LIRequest {
     override func callSuccess(withObject object: Any?, andMessage message: String?) {
         if let imageObject = self.imageSuccess, let data = object as? Data, let image = UIImage(data:data)  {
             LIPrint("Call success image block")
-            imageObject(self,image, message)
+            imageObject(response,image, message)
         }
         else {
             LIPrint("Success image block not set")
@@ -62,7 +62,7 @@ public class LIDownloadRequest : LIRequest {
         if let download = self.downloadSuccess, temporaryUrl != nil {
             LIPrint("Call success download block")
             self.successCalled = true
-            download(self,temporaryUrl!, message)
+            download(response,temporaryUrl!, message)
         }
         else {
             LIPrint("Success download block not set")
@@ -93,7 +93,7 @@ public class LIJSONRequest : LIRequest {
     override func callSuccess(withObject object: Any?, andMessage message: String?) {
         if let json = self.jsonSuccess {
             LIPrint("Call success JSON block")
-            json(self,object as? [AnyHashable:Any] ?? [:], message)
+            json(self.response,object as? [AnyHashable:Any] ?? [:], message)
         }
         else {
             LIPrint("Success json block not set")
@@ -132,7 +132,7 @@ public class LIZipRequest : LIRequest {
         if let zip = self.zipSuccess, dataObject != nil {
             LIPrint("Call success zip block")
             self.successCalled = true
-            zip(self,dataObject!, message)
+            zip(response,dataObject!, message)
         } else {
             LIPrint("Success zip block not set")
         }

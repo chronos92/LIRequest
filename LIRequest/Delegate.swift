@@ -22,7 +22,7 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
     public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
         LIPrint("Download dati in corso... (Scritti : \(totalBytesWritten.description), Da scrivere : \(totalBytesExpectedToWrite.description))")
         
-//        <NSProgress: 0x17412f280> : Parent: 0x0 / Fraction completed: 94061.7000 / Completed: 2821851 of 30
+        //        <NSProgress: 0x17412f280> : Parent: 0x0 / Fraction completed: 94061.7000 / Completed: 2821851 of 30
         
         guard totalBytesExpectedToWrite != NSURLSessionTransferSizeUnknown else { return }
         if let request = LIRequestInstance.shared.requestForTask[downloadTask] {
@@ -75,11 +75,8 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
                 let file = tmp.appendingPathComponent(Date().timeIntervalSince1970.description).appendingPathExtension(fileExtension)
                 do {
                     try FileManager.default.moveItem(at: location, to: file)
-                    if let mime = downloadTask.response?.mimeType {
-                        request.realContentType = MimeType(mimeText: mime)
-                    }
-                        request.callSuccess(withObject: file, andMessage: nil)
-                        request.isCompleteObject?(request,true)
+                    request.callSuccess(withObject: file, andMessage: nil)
+                    request.isCompleteObject?(request.response,true)
                 }
                 catch {
                     self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .errorInResponse,
@@ -116,20 +113,14 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
             }
             if request.callbackName.isEmpty {
                 if !request.alreadyCalled {
-                    if let mime = downloadTask.response?.mimeType {
-                        request.realContentType = MimeType(mimeText: mime)
-                    }
-                        request.callSuccess(withObject: object, andMessage: object["message"] as? String)
-                        request.isCompleteObject?(request,true)
+                    request.callSuccess(withObject: object, andMessage: object["message"] as? String)
+                    request.isCompleteObject?(request.response,true)
                 }
             }
             else {
                 if !request.alreadyCalled {
-                    if let mime = downloadTask.response?.mimeType {
-                        request.realContentType = MimeType(mimeText: mime)
-                    }
-                        request.callSuccess(withObject: object[request.callbackName], andMessage: object["message"] as? String)
-                        request.isCompleteObject?(request,true)
+                    request.callSuccess(withObject: object[request.callbackName], andMessage: object["message"] as? String)
+                    request.isCompleteObject?(request.response,true)
                 }
             }
             return true
@@ -139,11 +130,8 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
             if let responseString = String(data: data, encoding: request.encoding) {
                 LIPrint("Contenuto nella risposta corretto")
                 if !request.alreadyCalled {
-                    if let mime = downloadTask.response?.mimeType {
-                        request.realContentType = MimeType(mimeText: mime)
-                    }
-                        request.callSuccess(withObject: responseString, andMessage: nil)
-                        request.isCompleteObject?(request,true)
+                    request.callSuccess(withObject: responseString, andMessage: nil)
+                    request.isCompleteObject?(request.response,true)
                 }
             } else {
                 LIPrint("Oggetto della risposta corrotto")
@@ -156,17 +144,14 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
         
         func completeImage(forRequest request : LIRequest,wtih data : Data)->Bool {
             if !request.alreadyCalled {
-                if let mime = downloadTask.response?.mimeType {
-                    request.realContentType = MimeType(mimeText: mime)
-                    if request.realContentType?.type != MimeType.TypeObject.image {
-                        self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .errorInResponse,
-                                                                                                          withUrlString: downloadTask.currentRequest?.url?.absoluteString,
-                                                                                                          withErrorString: nil,
-                                                                                                          withParameters: nil))
-                        return false
-                    }
+                if request.response?.mimeType?.type != MimeType.TypeObject.image {
+                    self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .errorInResponse,
+                                                                                                      withUrlString: downloadTask.currentRequest?.url?.absoluteString,
+                                                                                                      withErrorString: nil,
+                                                                                                      withParameters: nil))
+                    return false
                 }
-                    request.callSuccess(withObject: data, andMessage: nil)
+                request.callSuccess(withObject: data, andMessage: nil)
             }
             return true
         }
@@ -178,6 +163,19 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
             LIPrint("Non sono presenti dati nella risposta")
             self.urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .noDataInResponse))
             return
+        }
+        guard let response = downloadTask.response else {
+            LIPrint("Non è presente una risposta")
+            urlSession(session, task: downloadTask, didCompleteWithError: LIRequestError(forType: .noResponseInTask))
+            return
+        }
+        if request.response == nil{
+            if let response = response as? HTTPURLResponse {
+                request.response = LIResponse(response: response)
+            }
+            else {
+                request.response = LIResponse(response: response)
+            }
         }
         
         switch (request.accept.type,request.accept.subtype) {
@@ -195,11 +193,8 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
             guard completeText(forRequest: request, with: data) else { return }
         default:
             if !request.alreadyCalled {
-                if let mime = downloadTask.response?.mimeType {
-                    request.realContentType = MimeType(mimeText: mime)
-                }
-                    request.callSuccess(withObject: data, andMessage: nil)
-                    request.isCompleteObject?(request,true)
+                request.callSuccess(withObject: data, andMessage: nil)
+                request.isCompleteObject?(request.response,true)
             }
         }
     }
@@ -236,21 +231,21 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
     public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
         LIRequestInstance.shared.hideNetworkActivity()
         guard let request = LIRequestInstance.shared.requestForTask[task] else { return }
+        if request.response == nil,let response = task.response {
+            request.response = LIResponse(response: response)
+        }
         if let currentError = error {
             LIPrint("Errore nella chiamata")
             if !request.alreadyCalled {
                 let lierr = (currentError as? LIRequestError)
                 request.callFailure(withObject: lierr?.parameters, andError: currentError)
-                request.isCompleteObject?(request,false)
+                request.isCompleteObject?(request.response,false)
             }
         } else {
             LIPrint("Chiamata avvenuta con successo")
             if !request.alreadyCalled {
-                if let mime = task.response?.mimeType {
-                    request.realContentType = MimeType(mimeText: mime)
-                }
                 request.callSuccess(withObject: nil, andMessage: nil)
-                request.isCompleteObject?(request,true)
+                request.isCompleteObject?(request.response,true)
             }
         }
     }
@@ -263,3 +258,4 @@ internal class LIRequestDelegate : NSObject, URLSessionDelegate, URLSessionTaskD
         completionHandler(.useCredential, URLCredential(trust: challenge.protectionSpace.serverTrust!))
     }
 }
+

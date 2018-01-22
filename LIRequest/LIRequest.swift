@@ -26,14 +26,15 @@ public class LIRequest : Equatable {
         }
     }
     
+    /// Contiene il risultato della risposta
+    public var response : LIResponse?
+    
     /// Indica la chiave Accept nell'header della richiesta
     public var accept : MimeType
     
     /// Indica il Content-Type di default impostato nell'inizializzazione dell'oggetto LIRequest
     public var contentType : MimeType
-    
-    public var realContentType : MimeType?
-    
+        
     /// Indica il valore della chiave di default contenente l'oggetto utile nella risposta
     public var callbackName : String
     
@@ -82,10 +83,32 @@ public class LIRequest : Equatable {
         self.encoding = LIRequestInstance.shared.encoding
     }
     
+    /// Effettua una chiamata PUT all'indirizzo url con i parametri
+    ///
+    /// - Parameters:
+    ///   - url:    indica l'url a cui sarà indirizzata la chiamata
+    ///   - params: spacifica i parametri da passare al server durante la chiamata
+    public func put(toURL url : URL, withParams params : [String:Any]?) {
+        LIPrint("Creo nuova chiamata put")
+        LIPrint(url.absoluteString)
+        action(withMethod: .put, toUrl: url, withParams: params)
+    }
+    
+    /// Effettua una chiamata DELETE all'indirizzo url con i parametri
+    ///
+    /// - Parameters:
+    ///   - url:    indica l'url a cui sarà indirizzata la chiamata
+    ///   - params: specifica i parametri da passare al server durante la chiamata
+    public func delete(toURL url : URL, withParams params : [String:Any]?) {
+        LIPrint("Creo nuova chiamata delete")
+        LIPrint(url.absoluteString)
+        action(withMethod: .delete, toUrl: url, withParams: params)
+    }
+    
     /// Effettua una chiamata GET all'indirizzo url con i parametri
     ///
-    /// - parameter url:    indica l'url a cui sarà indirizzata la chiamata
-    /// - parameter params: specifica i parametri da passare al server durante la chiamata
+    /// - url:    indica l'url a cui sarà indirizzata la chiamata
+    /// - params: specifica i parametri da passare al server durante la chiamata
     public func get(toURL url : URL, withParams params : [String:Any]?) {
         LIPrint("Creo nuova chiamata get")
         LIPrint(url.absoluteString)
@@ -94,8 +117,8 @@ public class LIRequest : Equatable {
     
     /// Effettua una chiamata POST all'indirizzo url con i parametri
     ///
-    /// - parameter url:    indica l'url a cui sarà indirizzata la chiamata
-    /// - parameter params: specifica i parametri da passare al server durante la chiamata
+    /// - url:    indica l'url a cui sarà indirizzata la chiamata
+    /// - params: specifica i parametri da passare al server durante la chiamata
     public func post(toURL url : URL, withParams params : [String:Any]?) {
         LIPrint("Creo nuova chiamata post")
         LIPrint(url.absoluteString)
@@ -113,16 +136,20 @@ public class LIRequest : Equatable {
                     query = []
                     LIPrint("Errore nella codifica dei parametri")
                     let error = LIRequestError(forType: .incorrectParametersToSend,withParameters:par)
-                    self.failureObjects.forEach({[unowned self] in $0(self,nil,error)})
+                    self.failureObjects.forEach({[unowned self] in $0(self.response,nil,error)})
                 }
             } else {
                 query = queryString(fromParameter: par)
             }
             switch method {
+            case .delete:
+                insertQueryForDelete(query, inRequest: &request)
             case .get:
                 insertQueryForGet(query, inRequest: &request)
             case .post:
                 insertQueryForPost(query, inRequest: &request)
+            case .put:
+                insertQueryForPut(query, inRequest: &request)
             }
         }
         DispatchQueue.main.async {
@@ -132,7 +159,15 @@ public class LIRequest : Equatable {
         LIRequestInstance.shared.addNewCall(withTask: task, andRequest: self)
     }
     
+    private func insertQueryForDelete(_ query : [URLQueryItem],inRequest request : inout URLRequest) {
+        request.httpBody = convertItemsToString(query).data(using: self.encoding)
+    }
+    
     private func insertQueryForPost(_ query : [URLQueryItem],inRequest request : inout URLRequest) {
+        request.httpBody = convertItemsToString(query).data(using: self.encoding)
+    }
+    
+    private func insertQueryForPut(_ query : [URLQueryItem],inRequest request : inout URLRequest) {
         request.httpBody = convertItemsToString(query).data(using: self.encoding)
     }
     
@@ -193,7 +228,7 @@ public class LIRequest : Equatable {
         var request = self.request(forUrl: url,withMethod: .post)
         request.setValue("multipart/form-data", forHTTPHeaderField: "Content-Type")
         guard let imageData = UIImagePNGRepresentation(image) else {
-            self.failureObjects.forEach({[unowned self] in $0(self,nil,LIRequestError(forType: .incorrectImageToSend))})
+            self.failureObjects.forEach({[unowned self] in $0(self.response,nil,LIRequestError(forType: .incorrectImageToSend))})
             return
         }
         var body = Data()
@@ -343,14 +378,14 @@ public class LIRequest : Equatable {
     internal func callSuccess(withObject object : Any?, andMessage message : String?) {
         LIPrint("Chiamo blocco success")
         self.successObjects.forEach {[unowned self] (success) in
-            success(self, object, message)
+            success(self.response, object, message)
         }
     }
     
     internal func callFailure(withObject object:Any?,andError error : Error) {
         LIPrint("Chiamo blocco failure")
         self.failureObjects.forEach {[unowned self] (failure) in
-            failure(self,object,error)
+            failure(self.response,object,error)
         }
     }
 }
@@ -375,6 +410,7 @@ public class LIRequestError : NSError {
         case invalidUrl = 400
         case errorInResponse = 406
         case noDataInResponse = 407
+        case noResponseInTask = 408
         case incorrectResponseContentType = 500
         case incorrectParametersToSend = 600
         case incorrectImageToSend = -145
@@ -403,6 +439,8 @@ public class LIRequestError : NSError {
                 return LILocalizedString("ErrorIncorrectImageToSend", comment: "")
             case .aborted:
                 return LILocalizedString("ErrorAbortedCall", comment: "")
+            case .noResponseInTask:
+                return LILocalizedString("ErrorNoResponse", comment: "")
             }
         }
         
@@ -419,6 +457,8 @@ public class LIRequestError : NSError {
             case .incorrectResponseContentType:
                 fallthrough
             case .aborted:
+                fallthrough
+            case .noResponseInTask:
                 fallthrough
             case .errorInResponse:
                 return nil
